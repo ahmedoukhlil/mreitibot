@@ -519,12 +519,14 @@
       position: relative;
     }
     .bot-content .sub-list li::before {
-      content: '–';
-      color: var(--accent);
-      font-weight: 600;
+      content: '';
       position: absolute;
-      left: 0;
-      top: 0;
+      left: 2px;
+      top: 8px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
     }
 
     .bot-content h2 {
