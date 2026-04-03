@@ -489,19 +489,19 @@
       line-height: 1.65;
       list-style-type: disc;
     }
-    /* Nested ul inside ol li — sub-details indented */
-    .bot-content ol > li > ul {
-      margin-top: 6px;
-      margin-bottom: 4px;
+    /* Sub-details indented under ol items */
+    .bot-content .sub-list {
+      margin: 6px 0 8px 0;
       padding-left: 16px;
+      list-style: none;
     }
-    .bot-content ol > li > ul > li {
-      list-style-type: none;
-      padding-left: 0;
+    .bot-content .sub-list li {
       color: var(--text-secondary);
       font-size: 14px;
+      margin-bottom: 3px;
+      padding-left: 4px;
     }
-    .bot-content ol > li > ul > li::before {
+    .bot-content .sub-list li::before {
       content: '→ ';
       color: var(--accent);
       font-weight: 600;
@@ -1007,38 +1007,32 @@
     const lines = String(raw || '').split(/\r?\n/);
     const out = [];
 
-    // Stack-based list tracker: each entry = { type: 'ol'|'ul', indent: number }
-    const stack = [];
-
     const inline = (t) => esc(t)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
       .replace(/`(.+?)`/g, '<code>$1</code>')
       .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 
-    function getIndent(line) {
-      return line.match(/^(\s*)/)[1].length;
-    }
+    // Track a single top-level ol and whether we're inside a sub-ul
+    let inOl = false;   // top-level numbered list
+    let inUl = false;   // top-level bullet list
+    let inSubUl = false; // sub-bullets nested inside an ol item
 
-    function closeStackTo(targetIndent) {
-      while (stack.length && stack[stack.length - 1].indent >= targetIndent) {
-        const top = stack.pop();
-        out.push(top.type === 'ol' ? '</ol>' : '</ul>');
-      }
-    }
-
-    function closeAll() {
-      while (stack.length) {
-        const top = stack.pop();
-        out.push(top.type === 'ol' ? '</ol>' : '</ul>');
-      }
-    }
+    function closeSubUl() { if (inSubUl) { out.push('</ul>'); inSubUl = false; } }
+    function closeOl()    { closeSubUl(); if (inOl) { out.push('</ol>'); inOl = false; } }
+    function closeUl()    { if (inUl) { out.push('</ul>'); inUl = false; } }
+    function closeAll()   { closeOl(); closeUl(); }
 
     for (const line of lines) {
-      const h2 = line.match(/^##\s+(.+)$/);
-      const h3 = !h2 && line.match(/^###?\s+(.+)$/);
-      const olMatch = line.match(/^(\s*)\d+\.\s+(.+)$/);
-      const ulMatch = !olMatch && line.match(/^(\s*)[-*•]\s+(.+)$/);
+      const h2    = line.match(/^##\s+(.+)$/);
+      const h3    = !h2 && line.match(/^###?\s+(.+)$/);
+      // top-level numbered item (0 indent)
+      const olTop = line.match(/^\d+\.\s+(.+)$/);
+      // indented numbered item (treated as sub-bullet to preserve ol counter)
+      const olSub = !olTop && line.match(/^\s{2,}\d+\.\s+(.+)$/);
+      // bullet (any indent)
+      const ulMatch = !olTop && !olSub && line.match(/^(\s*)[-*•]\s+(.+)$/);
+      const isIndentedBullet = ulMatch && ulMatch[1].length >= 2;
 
       if (h2) {
         closeAll();
@@ -1046,40 +1040,31 @@
       } else if (h3) {
         closeAll();
         out.push(`<h3>${inline(h3[1])}</h3>`);
-      } else if (olMatch) {
-        const indent = olMatch[1].length;
-        const content = olMatch[2];
-        const top = stack[stack.length - 1];
-
-        if (!top || top.indent > indent) {
-          closeStackTo(indent);
-        }
-
-        const newTop = stack[stack.length - 1];
-        if (!newTop || newTop.indent < indent || newTop.type !== 'ol') {
-          // open a new ol, possibly nested inside last li
-          if (newTop && newTop.type === 'ul') {
-            // insert nested ol inside current ul context
-          }
-          out.push('<ol>');
-          stack.push({ type: 'ol', indent });
-        }
-        out.push(`<li>${inline(content)}</li>`);
+      } else if (olTop) {
+        // New top-level numbered item — close any sub-ul first but keep ol open
+        closeSubUl();
+        closeUl();
+        if (!inOl) { out.push('<ol>'); inOl = true; }
+        out.push(`<li>${inline(olTop[1])}</li>`);
+      } else if (olSub) {
+        // Indented numbered item inside an ol → render as sub-bullet (preserves ol counter)
+        closeUl();
+        if (!inOl) { out.push('<ol>'); inOl = true; }
+        if (!inSubUl) { out.push('<ul class="sub-list">'); inSubUl = true; }
+        out.push(`<li>${inline(olSub[1])}</li>`);
       } else if (ulMatch) {
-        const indent = ulMatch[1].length;
         const content = ulMatch[2];
-        const top = stack[stack.length - 1];
-
-        if (!top || top.indent > indent) {
-          closeStackTo(indent);
+        if (isIndentedBullet && inOl) {
+          // Sub-bullet inside an ol item
+          closeUl();
+          if (!inSubUl) { out.push('<ul class="sub-list">'); inSubUl = true; }
+          out.push(`<li>${inline(content)}</li>`);
+        } else {
+          // Top-level bullet list
+          closeOl();
+          if (!inUl) { out.push('<ul>'); inUl = true; }
+          out.push(`<li>${inline(content)}</li>`);
         }
-
-        const newTop = stack[stack.length - 1];
-        if (!newTop || newTop.indent < indent || newTop.type !== 'ul') {
-          out.push('<ul>');
-          stack.push({ type: 'ul', indent });
-        }
-        out.push(`<li>${inline(content)}</li>`);
       } else {
         closeAll();
         if (line.trim() === '') {
