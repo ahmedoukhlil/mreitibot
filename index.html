@@ -12,6 +12,7 @@
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { overflow-x: hidden; max-width: 100%; }
 
     :root {
       --bg: #f7f9fc;
@@ -816,21 +817,47 @@
       }
 
       .thread-inner {
-        padding: 24px 16px 16px;
+        padding: 16px 12px 16px;
+        max-width: 100%;
+        overflow-x: hidden;
       }
 
       .input-area {
-        padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
+        padding: 10px 12px calc(14px + env(safe-area-inset-bottom));
       }
 
-      .user-bubble { max-width: 86%; }
+      .input-area-inner {
+        max-width: 100%;
+      }
 
+      .user-bubble {
+        max-width: 86%;
+        word-break: break-word;
+      }
+
+      .bot-content {
+        max-width: 100%;
+        overflow-x: hidden;
+        word-break: break-word;
+      }
+
+      .bot-content ol,
+      .bot-content ul,
+      .bot-content .sub-list {
+        padding-left: 18px;
+      }
+
+      .message {
+        max-width: 100%;
+      }
 
       .welcome-suggestions {
         grid-template-columns: 1fr;
       }
 
       .welcome h1 { font-size: 22px; }
+
+      .welcome { padding: 16px 4px; }
     }
   </style>
 </head>
