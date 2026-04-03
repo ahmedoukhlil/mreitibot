@@ -470,6 +470,43 @@
     .bot-content p { margin: 0 0 12px; }
     .bot-content p:last-child { margin-bottom: 0; }
 
+    .bot-content ol {
+      margin: 4px 0 12px;
+      padding-left: 24px;
+      counter-reset: none;
+    }
+    .bot-content ol li {
+      margin-bottom: 10px;
+      line-height: 1.7;
+      list-style-type: decimal;
+    }
+    .bot-content ul {
+      margin: 4px 0 8px;
+      padding-left: 20px;
+    }
+    .bot-content ul li {
+      margin-bottom: 4px;
+      line-height: 1.65;
+      list-style-type: disc;
+    }
+    /* Nested ul inside ol li — sub-details indented */
+    .bot-content ol > li > ul {
+      margin-top: 6px;
+      margin-bottom: 4px;
+      padding-left: 16px;
+    }
+    .bot-content ol > li > ul > li {
+      list-style-type: none;
+      padding-left: 0;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    .bot-content ol > li > ul > li::before {
+      content: '→ ';
+      color: var(--accent);
+      font-weight: 600;
+    }
+
     .bot-content h2 {
       font-size: 16px;
       font-weight: 700;
@@ -969,11 +1006,9 @@
   function renderMarkdown(raw) {
     const lines = String(raw || '').split(/\r?\n/);
     const out = [];
-    let inUl = false, inOl = false;
 
-    const closeUl = () => { if (inUl) { out.push('</ul>'); inUl = false; } };
-    const closeOl = () => { if (inOl) { out.push('</ol>'); inOl = false; } };
-    const closeLists = () => { closeUl(); closeOl(); };
+    // Stack-based list tracker: each entry = { type: 'ol'|'ul', indent: number }
+    const stack = [];
 
     const inline = (t) => esc(t)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -981,30 +1016,74 @@
       .replace(/`(.+?)`/g, '<code>$1</code>')
       .replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 
+    function getIndent(line) {
+      return line.match(/^(\s*)/)[1].length;
+    }
+
+    function closeStackTo(targetIndent) {
+      while (stack.length && stack[stack.length - 1].indent >= targetIndent) {
+        const top = stack.pop();
+        out.push(top.type === 'ol' ? '</ol>' : '</ul>');
+      }
+    }
+
+    function closeAll() {
+      while (stack.length) {
+        const top = stack.pop();
+        out.push(top.type === 'ol' ? '</ol>' : '</ul>');
+      }
+    }
+
     for (const line of lines) {
       const h2 = line.match(/^##\s+(.+)$/);
       const h3 = !h2 && line.match(/^###?\s+(.+)$/);
-      const ul = line.match(/^\s*[-*•]\s+(.+)$/);
-      const ol = line.match(/^\s*\d+\.\s+(.+)$/);
+      const olMatch = line.match(/^(\s*)\d+\.\s+(.+)$/);
+      const ulMatch = !olMatch && line.match(/^(\s*)[-*•]\s+(.+)$/);
 
       if (h2) {
-        closeLists();
+        closeAll();
         out.push(`<h2>${inline(h2[1])}</h2>`);
       } else if (h3) {
-        closeLists();
+        closeAll();
         out.push(`<h3>${inline(h3[1])}</h3>`);
-      } else if (ul) {
-        closeOl();
-        if (!inUl) { out.push('<ul>'); inUl = true; }
-        out.push(`<li>${inline(ul[1])}</li>`);
-      } else if (ol) {
-        closeUl();
-        if (!inOl) { out.push('<ol>'); inOl = true; }
-        out.push(`<li>${inline(ol[1])}</li>`);
+      } else if (olMatch) {
+        const indent = olMatch[1].length;
+        const content = olMatch[2];
+        const top = stack[stack.length - 1];
+
+        if (!top || top.indent > indent) {
+          closeStackTo(indent);
+        }
+
+        const newTop = stack[stack.length - 1];
+        if (!newTop || newTop.indent < indent || newTop.type !== 'ol') {
+          // open a new ol, possibly nested inside last li
+          if (newTop && newTop.type === 'ul') {
+            // insert nested ol inside current ul context
+          }
+          out.push('<ol>');
+          stack.push({ type: 'ol', indent });
+        }
+        out.push(`<li>${inline(content)}</li>`);
+      } else if (ulMatch) {
+        const indent = ulMatch[1].length;
+        const content = ulMatch[2];
+        const top = stack[stack.length - 1];
+
+        if (!top || top.indent > indent) {
+          closeStackTo(indent);
+        }
+
+        const newTop = stack[stack.length - 1];
+        if (!newTop || newTop.indent < indent || newTop.type !== 'ul') {
+          out.push('<ul>');
+          stack.push({ type: 'ul', indent });
+        }
+        out.push(`<li>${inline(content)}</li>`);
       } else {
-        closeLists();
+        closeAll();
         if (line.trim() === '') {
-          out.push('<p style="margin:0;height:8px"></p>');
+          out.push('<p style="margin:0;height:6px"></p>');
         } else {
           out.push(`<p>${inline(line)}</p>`);
         }
