@@ -1046,13 +1046,14 @@
         closeOl();
         if (!inUl) { out.push('<ul>'); inUl = true; }
         out.push(`<li>${inline(ulTop[1])}</li>`);
+      } else if (line.trim() === '') {
+        // Empty line: close sub-list but keep ol open so numbering continues
+        closeSubUl();
+        closeUl();
+        if (!inOl) out.push('<p style="margin:0;height:6px"></p>');
       } else {
         closeAll();
-        if (line.trim() === '') {
-          out.push('<p style="margin:0;height:6px"></p>');
-        } else {
-          out.push(`<p>${inline(line)}</p>`);
-        }
+        out.push(`<p>${inline(line)}</p>`);
       }
     }
     closeAll();
