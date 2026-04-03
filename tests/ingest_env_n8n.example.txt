@@ -1,0 +1,11 @@
+# Variables d'environnement n8n — workflow « Ingestion PDF hybrid » (nœud Code hybrid JS)
+# Copier dans l'environnement du processus n8n (Docker, systemd, etc.)
+
+# Taille cible d'un chunk (caractères) — ~720 ≈ équilibre retrieval / cohérence
+INGEST_CHUNK_CHARS=720
+
+# Chevauchement entre fenêtres successives (caractères)
+INGEST_OVERLAP_CHARS=120
+
+# Plafond pour garder un tableau / bloc dense en un seul point (caractères)
+INGEST_CHUNK_MAX=2200

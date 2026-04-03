@@ -1,0 +1,182 @@
+{
+  "1": {
+    "label": "Supervision par le groupe multipartite",
+    "summary": "Pilotage du processus par une collaboration gouvernement, entreprises et société civile.",
+    "keywords": "groupe multipartite, MSG, gouvernance ITIE, supervision, parties prenantes"
+  },
+  "1.1": {
+    "label": "Engagement du gouvernement",
+    "summary": "Direction politique de haut niveau.",
+    "keywords": "gouvernement, engagement politique, haut niveau, direction, volonté politique"
+  },
+  "1.2": {
+    "label": "Engagement des entreprises",
+    "summary": "Participation active des sociétés extractives.",
+    "keywords": "entreprises extractives, opérateurs, engagement industrie, sociétés minières et pétrolières"
+  },
+  "1.3": {
+    "label": "Engagement de la société civile",
+    "summary": "Participation libre et indépendante.",
+    "keywords": "société civile, OSC, indépendance, participation, plaidoyer"
+  },
+  "1.4": {
+    "label": "Groupe multipartite",
+    "summary": "Établissement et gouvernance du groupe de supervision.",
+    "keywords": "groupe multipartite, MSG, composition, équilibre des collèges, mandat, statuts"
+  },
+  "1.5": {
+    "label": "Plan de travail",
+    "summary": "Maintien d'un plan chiffré avec des objectifs mesurables.",
+    "keywords": "plan de travail, objectifs mesurables, SMART, calendrier, résultats attendus"
+  },
+  "2": {
+    "label": "Cadre juridique et institutionnel, contrats et licences",
+    "summary": "Transparence sur les règles régissant le secteur extractif.",
+    "keywords": "cadre légal, licences, contrats, registre, fiscalité extractive, institutions"
+  },
+  "2.1": {
+    "label": "Cadre juridique",
+    "summary": "Description du régime fiscal et des rôles des organismes publics.",
+    "keywords": "régime fiscal, législation, cadre juridique, autorités publiques, rôles institutionnels"
+  },
+  "2.2": {
+    "label": "Octroi des licences",
+    "summary": "Processus d'attribution et critères de sélection.",
+    "keywords": "octroi, attribution, licences, permis, critères de sélection, procédure concurrentielle"
+  },
+  "2.3": {
+    "label": "Registre des licences",
+    "summary": "Informations sur les détenteurs et les coordonnées géographiques.",
+    "keywords": "registre, titulaires, titres miniers, périmètre géographique, cartographie"
+  },
+  "2.4": {
+    "label": "Divulgation des contrats",
+    "summary": "Publication des textes intégraux des contrats et licences.",
+    "keywords": "contrats, licences, publication intégrale, transparence contractuelle, textes officiels"
+  },
+  "2.5": {
+    "label": "Propriété effective",
+    "summary": "Divulgation des propriétaires réels des entreprises extractives.",
+    "keywords": "bénéficiaires effectifs, propriétaires réels, propriété réelle, UBO, actionnariat effectif, chaîne de contrôle"
+  },
+  "2.6": {
+    "label": "Participation de l'État",
+    "summary": "Rôle des entreprises publiques et transactions financières liées.",
+    "keywords": "entreprises d'État, SOE, participation publique, entreprises publiques extractives, flux financiers État"
+  },
+  "3": {
+    "label": "Exploration et production",
+    "summary": "Données sur le potentiel et l'activité réelle du secteur.",
+    "keywords": "exploration, production, volumes, réserves, exportations extractives"
+  },
+  "3.1": {
+    "label": "Exploration",
+    "summary": "Informations sur les activités de prospection significatives.",
+    "keywords": "exploration, prospection, permis d'exploration, activités significatives"
+  },
+  "3.2": {
+    "label": "Production",
+    "summary": "Données sur les volumes et les valeurs de production.",
+    "keywords": "production, volumes, valeurs, tonnage, barils, revenus production"
+  },
+  "3.3": {
+    "label": "Exportations",
+    "summary": "Données sur les volumes et les valeurs des produits exportés.",
+    "keywords": "exportations, flux commerciaux, volumes exportés, valeur des exportations"
+  },
+  "4": {
+    "label": "Collecte des revenus",
+    "summary": "Transparence sur les paiements des entreprises et recettes de l'État.",
+    "keywords": "revenus, paiements, recettes fiscales, matérialité, rapprochement"
+  },
+  "4.1": {
+    "label": "Déclaration exhaustive",
+    "summary": "Rapprochement des paiements et recettes significatifs.",
+    "keywords": "matérialité, seuils, agrégation, rapprochement paiements recettes, déclaration exhaustive"
+  },
+  "4.2": {
+    "label": "Ventes de la part de production de l'État",
+    "summary": "Transparence sur la vente de pétrole, gaz ou minerais par l'État.",
+    "keywords": "part de production État, ventes publiques, hydrocarbures, minerais, revenus vente"
+  },
+  "4.3": {
+    "label": "Transport",
+    "summary": "Revenus tirés du transport des ressources extractives.",
+    "keywords": "transport, pipelines, droits de transport, revenus logistiques extractifs"
+  },
+  "4.4": {
+    "label": "Transactions des entreprises d'État",
+    "summary": "Flux financiers entre l'État et ses entreprises.",
+    "keywords": "entreprises d'État, transferts, transactions internes, dividende, prête-nom"
+  },
+  "5": {
+    "label": "Attribution des revenus",
+    "summary": "Suivi de l'utilisation de l'argent issu de l'extraction.",
+    "keywords": "budget, répartition, transferts infranationaux, gestion des revenus"
+  },
+  "5.1": {
+    "label": "Répartition des revenus",
+    "summary": "Inscription des revenus au budget national.",
+    "keywords": "budget national, affectation, loi de finances, revenus extractifs budget"
+  },
+  "5.2": {
+    "label": "Transferts infranationaux",
+    "summary": "Revenus reversés aux collectivités locales.",
+    "keywords": "collectivités locales, décentralisation, transferts, péréquation, régions"
+  },
+  "5.3": {
+    "label": "Gestion des revenus et dépenses",
+    "summary": "Divulgation des politiques de gestion.",
+    "keywords": "gestion des ressources, politiques budgétaires, dépenses, fonds souverains, règles de gestion"
+  },
+  "6": {
+    "label": "Dépenses sociales et environnementales",
+    "summary": "Impact économique et social au-delà des simples taxes.",
+    "keywords": "social, environnement, emploi, quasi-fiscalité, impact"
+  },
+  "6.1": {
+    "label": "Dépenses sociales et environnementales",
+    "summary": "Paiements obligatoires ou volontaires pour le développement social.",
+    "keywords": "dépenses sociales, environnementales, développement local, obligations volontaires"
+  },
+  "6.2": {
+    "label": "Quasi-fiscalité",
+    "summary": "Dépenses hors budget effectuées par des entreprises d'État.",
+    "keywords": "quasi-fiscalité, dépenses hors budget, missions publiques, SOE"
+  },
+  "6.3": {
+    "label": "Contribution du secteur à l'économie",
+    "summary": "Emploi, PIB et investissements.",
+    "keywords": "emploi, PIB, investissement, contribution macroéconomique, chaîne de valeur"
+  },
+  "6.4": {
+    "label": "Impact environnemental",
+    "summary": "Divulgation des rapports d'impact et de réhabilitation.",
+    "keywords": "impact environnemental, EIE, réhabilitation, mitigation, biodiversité"
+  },
+  "7": {
+    "label": "Résultats et impact",
+    "summary": "Les données doivent nourrir le débat public et les réformes.",
+    "keywords": "impact, débat public, données ouvertes, recommandations, suivi"
+  },
+  "7.1": {
+    "label": "Débat public",
+    "summary": "Accessibilité des rapports pour favoriser la discussion.",
+    "keywords": "débat public, consultation, diffusion rapports, participation citoyenne"
+  },
+  "7.2": {
+    "label": "Accessibilité des données",
+    "summary": "Publication en format de données ouvertes.",
+    "keywords": "open data, données ouvertes, formats réutilisables, API, fichiers structurés"
+  },
+  "7.3": {
+    "label": "Recommandations",
+    "summary": "Suivi des leçons tirées pour améliorer la gouvernance.",
+    "keywords": "recommandations, plan d'action, suivi EITI, correctifs"
+  },
+  "7.4": {
+    "label": "Examen de l'impact",
+    "summary": "Évaluation annuelle des progrès accomplis.",
+    "keywords": "évaluation d'impact, progrès annuels, résultats ITIE, performance"
+  }
+}

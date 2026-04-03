@@ -1,0 +1,209 @@
+{
+  "name": "Ingestion PDF hybrid",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        240
+      ],
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef0102030405",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Qdrant hybride — sandbox n8n : httpRequest uniquement.\n * Création collection : essai corps Objet puis JSON string (selon n8n/axios).\n */\nconst httpRequest = this.helpers.httpRequest.bind(this);\n\nconst DROP_COLLECTION_FIRST = true;\nconst COLLECTION = 'documents';\nconst OLLAMA_MODEL = 'nomic-embed-text:latest';\n\nfunction envStr(name) {\n  try {\n    if (typeof process === 'undefined') return '';\n    const pe = process.env;\n    if (!pe || typeof pe[name] !== 'string') return '';\n    return pe[name];\n  } catch (_) {\n    return '';\n  }\n}\n\nfunction errStatus(e) {\n  return (\n    e.response?.status ||\n    e.statusCode ||\n    e.status ||\n    e.cause?.response?.status ||\n    e.error?.response?.status\n  );\n}\n\nfunction extractNestedResponseData(e, depth) {\n  if (depth > 12 || e == null) return null;\n  const data = e.response?.data ?? e.response?.body;\n  if (data != null) return data;\n  const next = e.cause ?? e.error ?? e.parent ?? e.originalError;\n  return extractNestedResponseData(next, depth + 1);\n}\n\nfunction formatApiError(prefix, e) {\n  const st = errStatus(e);\n  const nested = extractNestedResponseData(e, 0);\n  if (nested != null) {\n    const txt =\n      typeof nested === 'string'\n        ? nested\n        : nested.status?.error\n          ? String(nested.status.error)\n          : JSON.stringify(nested);\n    return `${prefix}HTTP ${st || '?'}\\n${txt.slice(0, 3200)}`;\n  }\n  return `${prefix}HTTP ${st || '?'}\\n${String(e.message || e).slice(0, 2000)}`;\n}\n\nasync function qdrantWrite(method, url, headers, payloadObj) {\n  try {\n    return await httpRequest({\n      method,\n      url,\n      headers,\n      body: payloadObj,\n      json: true,\n    });\n  } catch (e1) {\n    try {\n      return await httpRequest({\n        method,\n        url,\n        headers,\n        body: JSON.stringify(payloadObj),\n        json: false,\n      });\n    } catch (e2) {\n      throw new Error(\n        `Échec ${method} (2 formats).\\nA) ${formatApiError('', e1)}\\n---\\nB) ${formatApiError('', e2)}`,\n      );\n    }\n  }\n}\n\nlet baseUrl = '';\nlet apiKey = '';\nif (typeof this.getCredentials === 'function') {\n  try {\n    const qCred = await this.getCredentials('qdrantApi');\n    baseUrl = String(qCred.url || '').replace(/\\/$/, '');\n    apiKey = qCred.apiKey || qCred.api_key || '';\n  } catch (_) {}\n}\nif (!baseUrl) {\n  baseUrl = String(envStr('QDRANT_URL') || 'http://127.0.0.1:6333').replace(\n    /\\/$/,\n    '',\n  );\n}\n\nlet ollamaBase = '';\nif (typeof this.getCredentials === 'function') {\n  try {\n    const o = await this.getCredentials('ollamaApi');\n    ollamaBase = String(o.baseUrl || o.host || o.url || '').replace(/\\/$/, '');\n  } catch (_) {}\n}\nif (!ollamaBase) {\n  ollamaBase = String(envStr('OLLAMA_URL') || 'http://127.0.0.1:11434').replace(\n    /\\/$/,\n    '',\n  );\n}\n\nconst qHeaders = { 'Content-Type': 'application/json' };\nif (apiKey) qHeaders['api-key'] = apiKey;\n\nconst embRes = await httpRequest({\n  method: 'POST',\n  url: `${ollamaBase}/api/embeddings`,\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ model: OLLAMA_MODEL, prompt: 'test' }),\n  json: true,\n});\nconst dim = Array.isArray(embRes.embedding) ? embRes.embedding.length : 768;\n\nif (DROP_COLLECTION_FIRST) {\n  try {\n    await httpRequest({\n      method: 'DELETE',\n      url: `${baseUrl}/collections/${encodeURIComponent(COLLECTION)}`,\n      headers: qHeaders,\n      json: true,\n    });\n  } catch (_) {}\n}\n\nconst colUrl = `${baseUrl}/collections/${encodeURIComponent(COLLECTION)}`;\nlet created = false;\ntry {\n  await httpRequest({\n    method: 'GET',\n    url: colUrl,\n    headers: qHeaders,\n    json: true,\n  });\n} catch (e) {\n  if (errStatus(e) !== 404) {\n    throw new Error(formatApiError('GET collection ', e));\n  }\n  await qdrantWrite('PUT', colUrl, qHeaders, {\n    vectors: {\n      dense: { size: dim, distance: 'Cosine' },\n    },\n    sparse_vectors: {\n      'text-bm25': { modifier: 'idf' },\n    },\n  });\n  created = true;\n}\n\nreturn [\n  {\n    json: {\n      ok: true,\n      collection: COLLECTION,\n      denseDimensions: dim,\n      droppedFirst: DROP_COLLECTION_FIRST,\n      collectionCreatedNow: created,\n    },\n  },\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        240
+      ],
+      "id": "b2c3d4e5-f6a7-8901-bcde-f10203040506",
+      "name": "Setup hybrid Qdrant collection",
+      "credentials": {
+        "qdrantApi": {
+          "id": "fdUD8PGs55JXUGZa",
+          "name": "QdrantApi account"
+        },
+        "ollamaApi": {
+          "id": "imNsiOICQnbBmguP",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fileSelector": "/root/documents/**/*.pdf",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        -640,
+        240
+      ],
+      "id": "c3d4e5f6-a7b8-9012-cdef-120304050607",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        240
+      ],
+      "id": "d4e5f6a1-b8c9-0123-def0-203040506070",
+      "name": "Extract text from PDF"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Découpe hybride 100 % JS (n8n) : paragraphes, en-têtes type « Étape », exigences ITIE,\n * blocs tabulaires, chevauchement. Métadonnées enrichies pour Qdrant + préfixe embedding.\n *\n * Variables d'environnement (optionnelles) :\n * INGEST_CHUNK_CHARS   (défaut 720)\n * INGEST_OVERLAP_CHARS (défaut 120)\n * INGEST_CHUNK_MAX     (défaut 2200, plafond pour un seul bloc tableau/cas)\n */\nfunction envStr(name) {\n  try {\n    if (typeof process === 'undefined') return '';\n    const pe = process.env;\n    if (!pe || typeof pe[name] !== 'string') return '';\n    return pe[name];\n  } catch (_) {\n    return '';\n  }\n}\n\nfunction envInt(name, def) {\n  const v = envStr(name).trim();\n  if (!v) return def;\n  const n = parseInt(v, 10);\n  return Number.isFinite(n) && n > 0 ? n : def;\n}\n\nconst CHUNK_TARGET = envInt('INGEST_CHUNK_CHARS', 720);\nconst OVERLAP = envInt('INGEST_OVERLAP_CHARS', 120);\nconst CHUNK_HARD_MAX = envInt('INGEST_CHUNK_MAX', 2200);\nconst INGEST_PROFILE = 'hybrid_semantic_n8n_js_v1';\n\nconst items = $input.all();\nconst out = [];\n\nfunction pdfText(j) {\n  if (!j || typeof j !== 'object') return '';\n  if (typeof j.text === 'string') return j.text;\n  if (typeof j.data === 'string') return j.data;\n  for (const k of Object.keys(j)) {\n    const v = j[k];\n    if (typeof v === 'string' && v.length > 80) return v;\n  }\n  return '';\n}\n\nfunction normalizePdfText(s) {\n  return String(s || '')\n    .replace(/\\r\\n/g, '\\n')\n    .replace(/[ \\t]+/g, ' ')\n    .replace(/\\n{3,}/g, '\\n\\n')\n    .trim();\n}\n\nfunction hashDocId(sourceKey) {\n  let h = 2166136261;\n  const str = String(sourceKey || 'unknown');\n  for (let i = 0; i < str.length; i++) {\n    h ^= str.charCodeAt(i);\n    h = Math.imul(h, 16777619);\n  }\n  return 'doc_' + (h >>> 0).toString(16);\n}\n\nfunction titleFromFile(name) {\n  const n = String(name || '').replace(/\\\\/g, '/').split('/').pop() || '';\n  return n\n    .replace(/\\.pdf$/i, '')\n    .replace(/\\.html?$/i, '')\n    .replace(/_/g, ' ')\n    .trim() || n;\n}\n\n/**\n * Priorité au chemin d’ingestion (sous-dossiers sur le serveur) : plus fiable que le seul nom de fichier.\n * Arborescence typique : documents/orientation/Exigence 2/*.pdf, documents/Validation/, documents/norme/, documents/divulgation/\n */\nfunction documentTypeFromFolderPath(fullPath) {\n  const p = String(fullPath || '').toLowerCase().replace(/\\\\/g, '/');\n  if (\n    /(^|\\/)(validation|guide_validation|guide-de-la-validation|procedure-validation|procedure_de_validation|evaluations_ciblees|evaluations-ciblees)(\\/|$)/.test(\n      p,\n    ) ||\n    /validation\\s*guide|guide\\s*de\\s*la\\s*validation|procedure\\s*de\\s*validation/.test(\n      p,\n    )\n  )\n    return 'doc_validation';\n  if (\n    /(^|\\/)divulgation(\\/|$)/.test(p) ||\n    /(^|\\/)systematic_disclosure|toolkit_divulgation/.test(p)\n  )\n    return 'note_orientation';\n  if (\n    /(^|\\/)(orientation|guidance|notes_itie|notes-itie)(\\/|$)/.test(p) ||\n    /notes?\\s*d['\\u2019]?\\s*orientation/.test(p) ||\n    /(^|\\/)(exigence|requirement)\\s*[1-7](\\/|$)/.test(p)\n  )\n    return 'note_orientation';\n  if (\n    /(^|\\/)(norme|standard|partie\\s*1|principles?\\s*(and|&)?\\s*requirements)(\\/|$)/.test(\n      p,\n    )\n  )\n    return 'norme_itie';\n  return null;\n}\n\n/** Dossier « Exigence N » (N = 1..7, norme ITIE 2023) dans le chemin */\nfunction itieChapterFromFolderPath(fullPath) {\n  const p = String(fullPath || '').replace(/\\\\/g, '/');\n  const m = p.match(/(?:^|[\\\\/])(?:exigence|requirement)\\s*[:\\s]*([1-7])(?:\\D|$)/i);\n  return m ? m[1] : '';\n}\n\nfunction relativeCorpusPath(fullPath) {\n  const p = String(fullPath || '').replace(/\\\\/g, '/');\n  const markers = ['/documents/', '/root/documents/'];\n  for (const m of markers) {\n    const i = p.indexOf(m);\n    if (i >= 0) return p.slice(i + m.length);\n  }\n  return p.split('/').filter(Boolean).slice(0, -1).join('/') || '';\n}\n\nfunction classifyDocumentType(fileName, textHead) {\n  const fn = String(fileName || '').toLowerCase();\n  const head = String(textHead || '').slice(0, 12000).toLowerCase();\n  if (/orientation|guidance|note\\s*d|no_?orientation/.test(fn))\n    return 'note_orientation';\n  if (/note\\s*d'orientation|guide.*orientation/.test(head) && /itie|eiti/.test(head))\n    return 'note_orientation';\n  if (\n    /(guide|manuel|handbook).{0,40}valid/i.test(fn) ||\n    /valid.{0,24}(itie|eiti|guide)/i.test(fn) ||\n    /(itie|eiti).{0,28}valid/i.test(fn) ||\n    /bar[eè]me|scoring|crit[eè]res?\\s*de\\s*valid/i.test(fn)\n  )\n    return 'doc_validation';\n  if (\n    /crit[eè]res?\\s+de\\s+validation|guide\\s+(.{0,24}\\s+)?validation|guide\\s+de\\s+la\\s+validation|manuel\\s+de\\s+validation|validation\\s+itie|conformit[eé].*validation|proc[eé]dure\\s+de\\s+validation/i.test(\n      head,\n    )\n  )\n    return 'doc_validation';\n  if (/norme|standard/.test(fn) || /norme\\s+itie|standard\\s+itie/.test(head))\n    return 'norme_itie';\n  if (/rapport|mreiti|reconciliation|itie.*rapport/.test(fn)) return 'rapport_mreiti';\n  if (/rapport|tableau\\s+de\\s+conciliation/.test(head)) return 'rapport_mreiti';\n  return 'autre';\n}\n\nfunction requirementFromFileName(fileName) {\n  const base = String(fileName || '').replace(/\\.pdf$/i, '');\n  const m = base.match(/\\b([1-7])[._-]([0-9]{1,2})\\b/);\n  if (m) return m[1] + '.' + m[2];\n  const m2 = base.match(/exigence[_\\s-]*([1-7])[\\._]([0-9]{1,2})/i);\n  if (m2) return m2[1] + '.' + m2[2];\n  return '';\n}\n\nfunction extractRequirementFromText(snippet) {\n  const s = String(snippet || '').slice(0, 500);\n  const m = s.match(/exigence\\s+([1-7])[\\._]([0-9]{1,2})(?:[\\._]([a-z0-9]+))?/i);\n  if (m) return m[3] ? `${m[1]}.${m[2]}.${m[3]}` : `${m[1]}.${m[2]}`;\n  const m2 = s.match(/\\b([1-7])[\\._]([0-9]{1,2})[\\._]([a-z])\\b/i);\n  if (m2) return `${m2[1]}.${m2[2]}.${m2[3]}`;\n  return '';\n}\n\nfunction detectHeadingLine(line) {\n  const t = String(line || '').trim();\n  if (!t || t.length > 180) return '';\n  if (/^étape\\s+\\d+/i.test(t)) return t;\n  if (/^step\\s+\\d+/i.test(t)) return t;\n  if (/^exigence\\s+[0-9]+\\s*$/i.test(t)) return t;\n  if (/^exigence\\s+[0-9]+[\\._][0-9]+/i.test(t)) return t;\n  if (/^[0-9]+\\.[0-9]+(\\.[a-z]+)?\\s+[A-ZÀÉÈÊËÎÏÔÙÛÜÇ]/.test(t)) return t;\n  if (/^partie\\s+[ivx0-9]+/i.test(t)) return t;\n  return '';\n}\n\nfunction inferChunkType(text) {\n  const t = String(text || '');\n  const lines = t.split('\\n').filter((l) => l.trim());\n  if (lines.length >= 4) {\n    let tabLike = 0;\n    for (const l of lines) {\n      if (/\\t/.test(l) || /\\|/.test(l) || /\\s{3,}/.test(l)) tabLike++;\n    }\n    if (tabLike >= Math.ceil(lines.length * 0.45)) return 'data_table';\n  }\n  if (\n    /\\b(cameroun|tanzanie|guinée|ghana|zambie|nigeria|mali|sénégal)\\b/i.test(\n      t,\n    ) &&\n    /\\b(20[0-2][0-9])\\b/.test(t)\n  )\n    return 'case_study';\n  return 'narrative_section';\n}\n\nfunction splitIntoParagraphs(t) {\n  return String(t || '')\n    .split(/\\n{2,}/)\n    .map((p) => p.trim())\n    .filter(Boolean);\n}\n\nfunction chunkLongParagraph(para, target, overlap, hardMax) {\n  const chunks = [];\n  if (para.length <= target) {\n    if (para) chunks.push(para);\n    return chunks;\n  }\n  let start = 0;\n  while (start < para.length) {\n    let end = Math.min(start + hardMax, para.length);\n    if (end - start > target && end < para.length) {\n      end = Math.min(start + target, para.length);\n      const lb = para.lastIndexOf('\\n', end);\n      if (lb > start + Math.floor(target * 0.45)) end = lb + 1;\n      else {\n        const sp = para.lastIndexOf('. ', end);\n        if (sp > start + Math.floor(target * 0.45)) end = sp + 2;\n      }\n    }\n    const piece = para.slice(start, end).trim();\n    if (piece) chunks.push(piece);\n    if (end >= para.length) break;\n    let nextStart = end - overlap;\n    const nb = para.lastIndexOf('\\n', end - 1);\n    if (nb > start && nb >= nextStart) nextStart = nb + 1;\n    start = Math.max(start + 1, nextStart);\n  }\n  return chunks;\n}\n\nfunction buildEmbeddingPrefix(meta) {\n  const parts = [];\n  if (meta.document_type) parts.push(meta.document_type.replace(/_/g, ' '));\n  if (meta.itie_chapter && !meta.requirement_hint)\n    parts.push('ITIE chapitre exigence ' + meta.itie_chapter);\n  if (meta.requirement_hint) parts.push('ITIE exigence ' + meta.requirement_hint);\n  if (meta.section_path) parts.push(meta.section_path);\n  if (meta.title && !meta.section_path) parts.push(meta.title);\n  if (!parts.length) return '';\n  return '[' + parts.join(' | ') + ']\\n\\n';\n}\n\nfor (const item of items) {\n  const j = item.json || {};\n  const raw = pdfText(j);\n  const t = normalizePdfText(raw);\n  const filePath = j.path || j.filePath || '';\n  const fileName =\n    j.fileName ||\n    j.name ||\n    (filePath && String(filePath).split(/[/\\\\]/).pop()) ||\n    'inconnu.pdf';\n  const isWeb =\n    j.ingest_source === 'url' ||\n    j.content_type === 'text/html' ||\n    /\\.html?$/i.test(fileName);\n  const sourceKey = filePath ? filePath + '|' + fileName : fileName;\n  const documentId = hashDocId(sourceKey);\n  const title =\n    (isWeb && typeof j.source_title === 'string' && j.source_title.trim()\n      ? j.source_title.trim()\n      : null) || titleFromFile(fileName);\n  if (!t) continue;\n\n  const folderType = documentTypeFromFolderPath(filePath);\n  const documentType =\n    folderType || classifyDocumentType(fileName, t);\n  const itieChapter = itieChapterFromFolderPath(filePath);\n  const requirementHint = requirementFromFileName(fileName);\n  const sourceRelPath = relativeCorpusPath(filePath);\n  let requirementRolling = requirementHint;\n  const paragraphs = splitIntoParagraphs(t);\n\n  let sectionPath = '';\n  const buffer = [];\n  let bufLen = 0;\n\n  function emitChunk(body, idxRef) {\n    const chunkType = inferChunkType(body);\n    const reqFromChunk = extractRequirementFromText(body);\n    const req = reqFromChunk || requirementRolling || requirementHint || '';\n    if (reqFromChunk) requirementRolling = reqFromChunk;\n\n    const metadata = {\n      source: fileName,\n      filename: fileName,\n      source_path: filePath || '',\n      source_rel_path: sourceRelPath || undefined,\n      folder_document_type: folderType || undefined,\n      itie_chapter: itieChapter || undefined,\n      title,\n      document_id: documentId,\n      type: isWeb ? 'html' : 'pdf',\n      content_type: isWeb ? 'text/html' : 'application/pdf',\n      chunk_index: idxRef.count,\n      chunk_size_target: CHUNK_TARGET,\n      chunk_overlap: OVERLAP,\n      ingest_profile: INGEST_PROFILE,\n      document_type: documentType,\n      section_path: sectionPath || undefined,\n      requirement_hint: req || undefined,\n      chunk_type: chunkType,\n      has_table: chunkType === 'data_table',\n      has_example: chunkType === 'case_study',\n    };\n\n    const embedPrefix = buildEmbeddingPrefix(metadata);\n    const embedding_text = embedPrefix + body;\n\n    out.push({\n      json: {\n        chunk: body,\n        embedding_text,\n        chunk_index: idxRef.count,\n        source: fileName,\n        source_path: filePath || undefined,\n        document_id: documentId,\n        metadata,\n      },\n    });\n    idxRef.count += 1;\n  }\n\n  function flushBuffer(idxRef) {\n    if (!buffer.length) return;\n    const combined = buffer.join('\\n\\n');\n    buffer.length = 0;\n    bufLen = 0;\n\n    if (combined.length <= CHUNK_TARGET) {\n      emitChunk(combined, idxRef);\n      return;\n    }\n    const pieces = chunkLongParagraph(\n      combined,\n      CHUNK_TARGET,\n      OVERLAP,\n      CHUNK_HARD_MAX,\n    );\n    for (const p of pieces) emitChunk(p, idxRef);\n  }\n\n  const idxRef = { count: 0 };\n\n  for (const para of paragraphs) {\n    const lines = para.split('\\n');\n    for (const line of lines) {\n      const h = detectHeadingLine(line);\n      if (h) sectionPath = h.length > 160 ? h.slice(0, 157) + '…' : h;\n    }\n\n    const isHuge = para.length > CHUNK_HARD_MAX;\n    const linesP = para.split('\\n');\n    const tabLike = linesP.filter(\n      (l) => /\\t/.test(l) || /\\|/.test(l) || /\\s{3,}/.test(l),\n    ).length;\n    const isCompactTable =\n      linesP.length >= 4 && tabLike >= Math.ceil(linesP.length * 0.45);\n\n    if (isCompactTable && para.length <= CHUNK_HARD_MAX) {\n      flushBuffer(idxRef);\n      emitChunk(para, idxRef);\n      continue;\n    }\n\n    if (isHuge) {\n      flushBuffer(idxRef);\n      const pieces = chunkLongParagraph(\n        para,\n        CHUNK_TARGET,\n        OVERLAP,\n        CHUNK_HARD_MAX,\n      );\n      for (const p of pieces) emitChunk(p, idxRef);\n      continue;\n    }\n\n    const addLen = para.length + (bufLen ? 2 : 0);\n    if (bufLen + addLen > CHUNK_TARGET && bufLen > 0) flushBuffer(idxRef);\n\n    buffer.push(para);\n    bufLen = buffer.join('\\n\\n').length;\n  }\n\n  flushBuffer(idxRef);\n}\n\nconst counts = {};\nfor (const it of out) {\n  const id = it.json?.document_id;\n  if (id) counts[id] = (counts[id] || 0) + 1;\n}\nfor (const it of out) {\n  const m = it.json?.metadata;\n  const id = it.json?.document_id;\n  if (m && id && counts[id]) m.chunk_index_estimated_total = counts[id];\n}\n\nreturn out;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        240
+      ],
+      "id": "e5f6a7b8-c9d0-1234-ef01-304050607081",
+      "name": "Split into chunks (hybrid JS)"
+    },
+    {
+      "parameters": {
+        "batchSize": 64,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -40,
+        240
+      ],
+      "id": "a8b7c6d5-e4f3-2109-abcd-ef9876543210",
+      "name": "Loop Over Items (chunks)"
+    },
+    {
+      "parameters": {
+        "jsCode": "/* Upsert dense + BM25 — utilise embedding_text (préfixe contextuel) pour vecteur + sparse ;\n   payload.content = chunk affiché tel quel pour le LLM. */\nconst httpRequest = this.helpers.httpRequest.bind(this);\n\nconst COLLECTION = 'documents';\nconst OLLAMA_MODEL = 'nomic-embed-text:latest';\nconst BM25_TEXT_MAX = 32000;\nconst EMB_BATCH = 32;\nconst UPSERT_BATCH = 32;\nconst EMB_PARALLEL = 8;\n\nfunction envStr(name) {\n  try {\n    if (typeof process === 'undefined') return '';\n    const pe = process.env;\n    if (!pe || typeof pe[name] !== 'string') return '';\n    return pe[name];\n  } catch (_) {\n    return '';\n  }\n}\n\nfunction uuid4() {\n  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {\n    var r = (Math.random() * 16) | 0;\n    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);\n  });\n}\n\nasync function qdrantReq(method, url, headers, bodyObj) {\n  const reqOpts = {\n    method,\n    url,\n    headers,\n    json: true,\n    returnFullResponse: true,\n    ignoreHttpStatusErrors: true,\n  };\n  if (bodyObj !== undefined) reqOpts.body = bodyObj;\n  const resp = await httpRequest(reqOpts);\n  const code = resp.statusCode ?? resp.status ?? 0;\n  const body = resp.body ?? resp.data ?? resp;\n  if (code >= 400) {\n    const errTxt =\n      typeof body === 'string'\n        ? body\n        : body?.status?.error || JSON.stringify(body);\n    return { ok: false, code, error: errTxt, raw: body };\n  }\n  return { ok: true, code, data: body };\n}\n\nasync function embedTexts(ollamaBase, texts) {\n  try {\n    const res = await httpRequest({\n      method: 'POST',\n      url: ollamaBase + '/api/embed',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ model: OLLAMA_MODEL, input: texts }),\n      json: true,\n    });\n    const embs = res && res.embeddings;\n    if (Array.isArray(embs) && embs.length === texts.length) {\n      return embs;\n    }\n  } catch (_) {}\n  const out = new Array(texts.length);\n  for (let i = 0; i < texts.length; i += EMB_PARALLEL) {\n    const slice = texts.slice(i, i + EMB_PARALLEL);\n    const baseIdx = i;\n    await Promise.all(\n      slice.map((t, k) =>\n        httpRequest({\n          method: 'POST',\n          url: ollamaBase + '/api/embeddings',\n          headers: { 'Content-Type': 'application/json' },\n          body: JSON.stringify({ model: OLLAMA_MODEL, prompt: t }),\n          json: true,\n        }).then((r) => {\n          out[baseIdx + k] = r.embedding;\n        }),\n      ),\n    );\n  }\n  return out;\n}\n\nlet baseUrl = '';\nlet apiKey = '';\nif (typeof this.getCredentials === 'function') {\n  try {\n    const q = await this.getCredentials('qdrantApi');\n    baseUrl = String(q.url || '').replace(/\\/$/, '');\n    apiKey = q.apiKey || q.api_key || '';\n  } catch (_) {}\n}\nif (!baseUrl)\n  baseUrl = String(envStr('QDRANT_URL') || 'http://127.0.0.1:6333').replace(\n    /\\/$/,\n    '',\n  );\n\nlet ollamaBase = '';\nif (typeof this.getCredentials === 'function') {\n  try {\n    const o = await this.getCredentials('ollamaApi');\n    ollamaBase = String(o.baseUrl || o.host || o.url || '').replace(/\\/$/, '');\n  } catch (_) {}\n}\nif (!ollamaBase)\n  ollamaBase = String(envStr('OLLAMA_URL') || 'http://127.0.0.1:11434').replace(\n    /\\/$/,\n    '',\n  );\n\nconst qH = { 'Content-Type': 'application/json' };\nif (apiKey) qH['api-key'] = apiKey;\n\nlet qdrantVersion = '';\ntry {\n  const ri = await httpRequest({\n    method: 'GET',\n    url: baseUrl,\n    headers: qH,\n    json: true,\n  });\n  if (ri && ri.version) qdrantVersion = ri.version;\n} catch (_) {}\n\nconst colRes = await qdrantReq(\n  'GET',\n  baseUrl + '/collections/' + encodeURIComponent(COLLECTION),\n  qH,\n  undefined,\n);\nif (!colRes.ok) {\n  throw new Error(\n    'Collection \"' +\n      COLLECTION +\n      '\" introuvable (' +\n      colRes.code +\n      '). Lancez Setup. ' +\n      String(colRes.error).slice(0, 500),\n  );\n}\nconst colData =\n  colRes.data && colRes.data.result !== undefined\n    ? colRes.data.result\n    : colRes.data;\nconst colParams =\n  (colData && colData.config && colData.config.params) || colData.params || {};\nconst vectors = colParams.vectors || {};\nlet expectedDim = null;\nif (vectors.dense && vectors.dense.size) expectedDim = vectors.dense.size;\nelse if (typeof vectors.size === 'number') expectedDim = vectors.size;\nconst sparseKeys = Object.keys(colParams.sparse_vectors || {});\nif (sparseKeys.indexOf('text-bm25') < 0) {\n  throw new Error(\n    'Sparse \"text-bm25\" absent. Recréez la collection (DROP_COLLECTION_FIRST=true).',\n  );\n}\n\nconst upsertUrl =\n  baseUrl +\n  '/collections/' +\n  encodeURIComponent(COLLECTION) +\n  '/points?wait=false';\nconst rows = $input.all();\n\nconst chunks = [];\nfor (let i = 0; i < rows.length; i++) {\n  const json = rows[i].json || {};\n  const raw = json.chunk;\n  if (!raw || !String(raw).trim()) continue;\n  const embedSrc = json.embedding_text || json.chunk;\n  const safe = String(raw).replace(/\\0/g, '');\n  const safeEmbed = String(embedSrc).replace(/\\0/g, '');\n  const bm25Src =\n    safeEmbed.length > BM25_TEXT_MAX\n      ? safeEmbed.slice(0, BM25_TEXT_MAX)\n      : safeEmbed;\n  const meta = json.metadata || { source: json.source, type: 'pdf' };\n  chunks.push({\n    idx: i,\n    text: safe,\n    embedText: safeEmbed,\n    bm25: bm25Src,\n    meta,\n    source: json.source,\n    chunk_index: json.chunk_index,\n  });\n}\n\nconst embeddings = [];\nfor (let b = 0; b < chunks.length; b += EMB_BATCH) {\n  const slice = chunks.slice(b, b + EMB_BATCH);\n  const vecs = await embedTexts(\n    ollamaBase,\n    slice.map(function (c) {\n      return c.embedText;\n    }),\n  );\n  for (let k = 0; k < vecs.length; k++) {\n    var emb = vecs[k];\n    if (!Array.isArray(emb) || !emb.length) {\n      throw new Error('[chunk ' + slice[k].idx + '] Ollama: embedding vide');\n    }\n    if (expectedDim != null && emb.length !== expectedDim) {\n      throw new Error(\n        '[chunk ' +\n          slice[k].idx +\n          '] Dimension=' +\n          emb.length +\n          ' vs collection=' +\n          expectedDim,\n      );\n    }\n    embeddings.push(emb);\n  }\n}\n\nconst results = [];\nfor (let b = 0; b < chunks.length; b += UPSERT_BATCH) {\n  var batchChunks = chunks.slice(b, b + UPSERT_BATCH);\n  var batchEmbs = embeddings.slice(b, b + UPSERT_BATCH);\n  var points = batchChunks.map(function (c, k) {\n    const m = c.meta || {};\n    return {\n      id: uuid4(),\n      vector: {\n        dense: batchEmbs[k],\n        'text-bm25': {\n          text: c.bm25,\n          model: 'qdrant/bm25',\n          options: { language: 'french' },\n        },\n      },\n      payload: {\n        content: c.text,\n        page_content: c.text,\n        document_id: m.document_id,\n        source: c.source,\n        chunk_index: c.chunk_index,\n        metadata: m,\n        document_type: m.document_type,\n        chunk_type: m.chunk_type,\n        section_path: m.section_path,\n        requirement_hint: m.requirement_hint,\n      },\n    };\n  });\n\n  var res = await qdrantReq('PUT', upsertUrl, qH, { points: points });\n  if (!res.ok) {\n    throw new Error(\n      '[lot interne ' +\n        Math.floor(b / UPSERT_BATCH) +\n        '] Qdrant ' +\n        (qdrantVersion || '?') +\n        ' HTTP ' +\n        res.code +\n        ' : ' +\n        String(res.error).slice(0, 2000),\n    );\n  }\n\n  for (var k = 0; k < batchChunks.length; k++) {\n    results.push({\n      json: {\n        upserted: true,\n        pointId: points[k].id,\n        source: batchChunks[k].source,\n        chunk_index: batchChunks[k].chunk_index,\n      },\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        240
+      ],
+      "id": "f6a7b8c9-d0e1-2345-f012-405060708192",
+      "name": "Upsert dense + BM25 (Qdrant API)",
+      "credentials": {
+        "qdrantApi": {
+          "id": "fdUD8PGs55JXUGZa",
+          "name": "QdrantApi account"
+        },
+        "ollamaApi": {
+          "id": "imNsiOICQnbBmguP",
+          "name": "Ollama account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Setup hybrid Qdrant collection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Setup hybrid Qdrant collection": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract text from PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract text from PDF": {
+      "main": [
+        [
+          {
+            "node": "Split into chunks (hybrid JS)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items (chunks)": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Upsert dense + BM25 (Qdrant API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert dense + BM25 (Qdrant API)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items (chunks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split into chunks (hybrid JS)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items (chunks)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "hybrid-ingest-n8n-js-v2-semantic-prefix",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

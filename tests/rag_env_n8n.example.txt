@@ -1,0 +1,49 @@
+# Copier ces variables dans l'environnement du processus n8n (Docker Compose, systemd, etc.)
+# pour ajuster retrieval / contexte sans modifier le JSON du workflow.
+
+# --- Qdrant hybrid (nœud « Qdrant Hybrid Search ») ---
+RAG_PREFETCH_LIMIT=24
+RAG_FINAL_LIMIT=10
+# Filtre retrieval (voir scripts/rag_qdrant_hybrid_search.js)
+# Défaut (smart) : si la question cite une exigence → GN d’abord ; si aucun chunk GN pour cette exigence → guide validation, puis norme.
+# RAG_REFERENCE_DOC_TYPES=note_orientation,norme_itie,doc_validation
+# Sans logique « exigence » (tout le corpus reference en une requête) :
+# RAG_RETRIEVAL_STRATEGY=reference
+# Ancien mode (orientation puis validation si peu de résultats) :
+# RAG_RETRIEVAL_STRATEGY=orientation_then_validation
+# Toute la collection :
+# RAG_RETRIEVAL_STRATEGY=all
+# RAG_ORIENTATION_MIN_HITS=3
+# RAG_FALLBACK_MIN_HITS=2
+
+# --- Cohere rerank (nœud « Cohere Rerank HTTP ») ---
+# Désactiver : pas d'appel API, ordre = sortie Qdrant hybride
+COHERE_RERANK_ENABLED=true
+RAG_RERANK_TOP_N=6
+
+# --- Prompt contexte (nœud « Code in JavaScript » après rerank) ---
+# Si non définies : limites dynamiques selon queryType (implementation → plus large).
+# Forcer des plafonds fixes :
+# RAG_MAX_CONTEXT_CHARS=2400
+# RAG_LLM_MAX_CHUNKS=8
+
+# Historique conversation (prompt principal + salutations) — optionnel
+# RAG_HISTORY_MAX_MESSAGES=8
+# RAG_HISTORY_MAX_CHARS_PER_MSG=650
+
+# Qualité des extraits (filtrage avant construction du contexte)
+RAG_MIN_CONTENT_LENGTH=150
+# Seuil score Qdrant (RRF) ; baisser si rerank Cohere désactivé (ex. 0.2)
+RAG_MIN_SCORE=0.28
+# Max chunks par document_id avant diversification
+RAG_MAX_CHUNKS_PER_DOC=3
+
+# Post-traitement réponse (nœud « Code in JavaScript1 »)
+# strict par défaut ; mettre false pour n’ajouter qu’un avertissement au lieu du message de repli
+# RAG_STRICT_CITATION=false
+
+# Exemple test chunks plus serrés (audit type « 3–5 extraits ») :
+# RAG_FINAL_LIMIT=8
+# RAG_RERANK_TOP_N=4
+# RAG_LLM_MAX_CHUNKS=5
+# RAG_MAX_CONTEXT_CHARS=1800
