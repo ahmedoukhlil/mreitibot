@@ -1033,8 +1033,10 @@
         if (!inOl) { out.push('<ol>'); inOl = true; }
         out.push(`<li>${inline(olTop[1])}</li>`);
       } else if (isSub) {
-        // Any indented content (bullets, letters, numbers) → sub-list under current ol
-        const subContent = isSub[1].replace(/^[-*•]\s+/, '').replace(/^[a-z]\.\s+/, '').replace(/^\d+\.\s+/, '');
+        // Indented content → sub-list under current ol item
+        // Strip leading bullet/letter/number markers, keep the rest
+        const raw2 = isSub[1];
+        const subContent = raw2.replace(/^[-*•]\s+/, '').replace(/^[a-z]\.\s+/, '').replace(/^\d+\.\s+/, '');
         closeUl();
         if (!inOl) { out.push('<ol>'); inOl = true; }
         if (!inSubUl) { out.push('<ul class="sub-list">'); inSubUl = true; }
