@@ -1107,9 +1107,29 @@
     el.className = 'message message-bot';
     el.innerHTML = `
       <div class="bot-avatar"><img src="logo_mreiti.png" alt="MREITI" onerror="this.parentElement.innerHTML='<span class=\\'bot-avatar-letter\\'>M</span>'" /></div>
-      <div class="bot-content">${renderMarkdown(text)}</div>
+      <div class="bot-content"></div>
     `;
     threadInner.appendChild(el);
+    scrollBottom();
+    return el.querySelector('.bot-content');
+  }
+
+  // Streaming effect: reveal text character by character
+  async function streamBotMessage(text) {
+    const contentEl = appendBotMessage('');
+    const chars = [...text]; // handle unicode properly
+    let revealed = '';
+    const CHUNK = 4;      // chars per tick
+    const DELAY = 18;     // ms per tick
+
+    for (let i = 0; i < chars.length; i += CHUNK) {
+      revealed += chars.slice(i, i + CHUNK).join('');
+      contentEl.innerHTML = renderMarkdown(revealed);
+      scrollBottom();
+      await new Promise(r => setTimeout(r, DELAY));
+    }
+    // Final render to ensure complete output
+    contentEl.innerHTML = renderMarkdown(text);
     scrollBottom();
   }
 
@@ -1215,7 +1235,7 @@
 
       const reply = await res.text();
       hideTyping();
-      appendBotMessage(reply || '—');
+      await streamBotMessage(reply || '—');
 
       chatHistory.push({ role: 'user', content: text });
       chatHistory.push({ role: 'assistant', content: trunc(reply || '', HISTORY_MAX_CHARS) });
