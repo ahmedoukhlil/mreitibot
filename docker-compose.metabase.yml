@@ -1,0 +1,23 @@
+# Optionnel : uniquement si Docker est disponible.
+# Sans Docker : lancer Metabase avec le JAR + Java (voir metabase.env.example).
+
+services:
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: mysql
+      MB_DB_DBNAME: ${MB_DB_DBNAME:-metabase}
+      MB_DB_HOST: ${MB_DB_HOST:-mysql}
+      MB_DB_PORT: ${MB_DB_PORT:-3306}
+      MB_DB_USER: ${MB_DB_USER:-metabase}
+      MB_DB_PASS: ${MB_DB_PASS:-change-me}
+    # Optionnel: persistance côté Metabase si tu préfères H2 (pas recommandé en prod)
+    # volumes:
+    #   - metabase-data:/metabase-data
+
+# volumes:
+#   metabase-data:

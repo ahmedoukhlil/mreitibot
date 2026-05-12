@@ -1,0 +1,211 @@
+{
+  "name": "Crawler EITI Web",
+  "nodes": [
+    {
+      "id": "craw-0001-trig-ger1-manu-altrigger1",
+      "name": "Démarrer le crawler",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        400
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "craw-0002-seed-urls-list-node001",
+      "name": "Seed URLs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        420,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "/**\n * Nœud 1 : Seed URLs\n * Liste toutes les URLs EITI à scraper + découverte dynamique de nouvelles pages.\n * document_type et requirement_hint sont pré-assignés quand connus.\n */\n\nconst SEED_PAGES = [\n  // ── Page principale des exigences (25 000+ mots, découper par H3) ──\n  {\n    url: 'https://eiti.org/fr/exigences-de-litie',\n    document_type: 'norme_itie',\n    parse_mode: 'requirements_page',\n    title: 'Exigences de l\\'ITIE — Norme ITIE 2023',\n  },\n\n  // ── Page norme ITIE ──\n  {\n    url: 'https://eiti.org/fr/norme-itie',\n    document_type: 'norme_itie',\n    parse_mode: 'standard',\n    title: 'Norme ITIE',\n  },\n\n  // ── Notes d\\'orientation (37 pages) ──\n  { url: 'https://eiti.org/fr/guidance-notes/comment-devenir-pays-de-mise-en-oeuvre-de-litie', document_type: 'note_orientation', requirement_hint: '1.1' },\n  { url: 'https://eiti.org/fr/guidance-notes/secretariats-nationaux', document_type: 'note_orientation', requirement_hint: '1.1' },\n  { url: 'https://eiti.org/fr/guidance-notes/etablissement-et-gouvernance-des-groupes-multipartites', document_type: 'note_orientation', requirement_hint: '1.1' },\n  { url: 'https://eiti.org/fr/guidance-notes/mise-en-oeuvre-de-litie-tenant-compte-du-genre', document_type: 'note_orientation' },\n  { url: 'https://eiti.org/fr/guidance-notes/planification-suivi-et-examen-du-travail-pour-une-mise-en-oeuvre-de-litie-fort', document_type: 'note_orientation', requirement_hint: '1.1' },\n  { url: 'https://eiti.org/fr/guidance-notes/lutter-contre-les-risques-de-corruption-grace-la-mise-en-oeuvre-de-litie', document_type: 'note_orientation' },\n  { url: 'https://eiti.org/fr/guidance-notes/octrois-des-contrats-et-des-licences', document_type: 'note_orientation', requirement_hint: '2.2' },\n  { url: 'https://eiti.org/fr/guidance-notes/contrats-et-licences', document_type: 'note_orientation', requirement_hint: '2.2' },\n  { url: 'https://eiti.org/fr/guidance-notes/dispositions-de-transition-energetique-dans-les-cadres-juridiques-et-les-regimes-fiscaux', document_type: 'note_orientation', requirement_hint: '2.1' },\n  { url: 'https://eiti.org/fr/guidance-notes/registre-des-licences', document_type: 'note_orientation', requirement_hint: '2.3' },\n  { url: 'https://eiti.org/fr/guidance-notes/comprendre-les-etats-financiers-des-entreprises-detat', document_type: 'note_orientation', requirement_hint: '2.6' },\n  { url: 'https://eiti.org/fr/guidance-notes/suivi-exerce-par-le-groupe-multipartite-des-declarations-relatives-aux-beneficiaires', document_type: 'note_orientation', requirement_hint: '2.5' },\n  { url: 'https://eiti.org/fr/guidance-notes/modele-de-formulaire-de-declaration-sur-la-propriete-effective', document_type: 'note_orientation', requirement_hint: '2.5' },\n  { url: 'https://eiti.org/fr/guidance-notes/la-conception-de-bases-de-donnees-relationnelles', document_type: 'note_orientation', requirement_hint: '2.5' },\n  { url: 'https://eiti.org/fr/guidance-notes/etablir-des-registres-verifiables-des-declarations-de-propriete-effective', document_type: 'note_orientation', requirement_hint: '2.5' },\n  { url: 'https://eiti.org/fr/guidance-notes/activites-dexploration-et-reserves', document_type: 'note_orientation', requirement_hint: '3.1' },\n  { url: 'https://eiti.org/fr/guidance-notes/couverture-de-lexploitation-miniere-artisanale-et-petite-echelle-emape-dans-le-rapportage-ITIE', document_type: 'note_orientation', requirement_hint: '3.2' },\n  { url: 'https://eiti.org/fr/guidance-notes/definition-de-la-materialite-des-seuils-de-declaration-et-des-entites-declarantes', document_type: 'note_orientation', requirement_hint: '4.1' },\n  { url: 'https://eiti.org/fr/guidance-notes/la-delimitation-du-perimetre-de-rapportage-itie', document_type: 'note_orientation', requirement_hint: '4.1' },\n  { url: 'https://eiti.org/fr/guidance-notes/prets-adosses-des-ressources', document_type: 'note_orientation', requirement_hint: '4.3' },\n  { url: 'https://eiti.org/fr/guidance-notes/dispositions-relatives-aux-infrastructures-et-accords-de-troc', document_type: 'note_orientation', requirement_hint: '4.3' },\n  { url: 'https://eiti.org/fr/guidance-notes/revenus-provenant-du-transport', document_type: 'note_orientation', requirement_hint: '4.2' },\n  { url: 'https://eiti.org/fr/guidance-notes/paiements-et-transferts-infranationaux', document_type: 'note_orientation', requirement_hint: '5.2' },\n  { url: 'https://eiti.org/fr/guidance-notes/declarations-par-projet', document_type: 'note_orientation', requirement_hint: '4.7' },\n  { url: 'https://eiti.org/fr/guidance-notes/la-qualite-des-donnees-et-la-verification', document_type: 'note_orientation', requirement_hint: '4.9' },\n  { url: 'https://eiti.org/fr/guidance-notes/durabilite-des-revenus-du-secteur-extractif', document_type: 'note_orientation', requirement_hint: '5.3' },\n  { url: 'https://eiti.org/fr/guidance-notes/impact-environnemental-des-activites-extractives', document_type: 'note_orientation', requirement_hint: '6.1' },\n  { url: 'https://eiti.org/fr/guidance-notes/politiques-de-donnees-ouvertes-et-de-divulgations-de-donnees-en-format-ouvert', document_type: 'note_orientation', requirement_hint: '7.2' },\n  { url: 'https://eiti.org/fr/guidance-notes/modele-de-donnees-resumees-itie', document_type: 'note_orientation', requirement_hint: '7.1' },\n  { url: 'https://eiti.org/fr/guidance-notes/recommandations-issues-du-rapportage-itie', document_type: 'note_orientation', requirement_hint: '7.4' },\n  { url: 'https://eiti.org/fr/guidance-notes/documenter-les-progres-pour-la-validation', document_type: 'doc_validation' },\n  { url: 'https://eiti.org/fr/guidance-notes/guide-de-validation-itie-norme-itie-2023', document_type: 'doc_validation' },\n  { url: 'https://eiti.org/fr/guidance-notes/guide-de-la-validation-norme-itie-2019', document_type: 'doc_validation' },\n  { url: 'https://eiti.org/fr/guidance-notes/procedure-de-validation-de-litie-norme-itie-2023', document_type: 'doc_validation' },\n  { url: 'https://eiti.org/fr/guidance-notes/procedure-de-validation', document_type: 'doc_validation' },\n  { url: 'https://eiti.org/fr/guidance-notes/procedure-pour-les-evaluations-ciblees', document_type: 'doc_validation' },\n  { url: 'https://eiti.org/fr/guidance-notes/termes-de-reference-pour-le-rapportage-itie', document_type: 'note_orientation' },\n\n  // ── Documents ──\n  { url: 'https://eiti.org/fr/documents/parler-cest-important', document_type: 'note_orientation' },\n  { url: 'https://eiti.org/fr/documents/le-suivi-et-levaluation-se-de-la-mise-en-oeuvre-de-litie', document_type: 'note_orientation' },\n  { url: 'https://eiti.org/fr/documents/modeles-de-collecte-de-donnees-pour-la-validation-norme-itie-2023', document_type: 'doc_validation' },\n  { url: 'https://eiti.org/fr/documents/modeles-de-collecte-de-donnees-pour-la-validation-norme-itie-2019', document_type: 'doc_validation' },\n  { url: 'https://eiti.org/fr/documents/boite-outils-divulgation-systematique', document_type: 'note_orientation' },\n  { url: 'https://eiti.org/fr/documents/termes-de-reference-pour-letude-de-faisabilite-sur-la-divulgation-systematique', document_type: 'note_orientation' },\n  { url: 'https://eiti.org/fr/documents/termes-de-reference-pour-une-etude-de-delimitation-du-perimetre-pour-le-rapport-itie', document_type: 'note_orientation' },\n\n  // ── Page guide mise en oeuvre ──\n  {\n    url: 'https://eiti.org/fr/guide-pour-la-mise-en-oeuvre-de-la-norme-itie',\n    document_type: 'note_orientation',\n    parse_mode: 'standard',\n    title: 'Guide pour la mise en oeuvre de la Norme ITIE',\n  },\n];\n\nreturn SEED_PAGES.map(p => ({ json: p }));\n"
+      }
+    },
+    {
+      "id": "craw-0003-http-fetc-h-pa-ge001",
+      "name": "HTTP Fetch Page",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "/**\n * Nœud 2 : HTTP Fetcher avec rate limiting\n * Récupère le HTML brut de chaque URL.\n * Rate limit : 1 requête / 2 secondes (respectueux du site).\n */\nconst item = $input.item.json;\nconst url = item.url;\n\nif (!url) return { json: { ...item, error: 'url_manquante', html: '' } };\n\n// Rate limiting via globalThis (partagé entre exécutions du même nœud)\nconst g = globalThis;\ng.__eitiLastFetch = g.__eitiLastFetch || 0;\nconst now = Date.now();\nconst elapsed = now - g.__eitiLastFetch;\nconst RATE_LIMIT_MS = 2000;\n\nif (elapsed < RATE_LIMIT_MS) {\n  await new Promise(r => setTimeout(r, RATE_LIMIT_MS - elapsed));\n}\ng.__eitiLastFetch = Date.now();\n\ntry {\n  const resp = await this.helpers.httpRequest({\n    method: 'GET',\n    url,\n    headers: {\n      'User-Agent': 'Chafafiya-RAG-Crawler/1.0 (MREITI documentation bot; contact: admin@mreiti.mr)',\n      'Accept': 'text/html,application/xhtml+xml',\n      'Accept-Language': 'fr,en;q=0.9',\n    },\n    returnFullResponse: true,\n    ignoreHttpStatusErrors: true,\n    timeout: 30000,\n  });\n\n  const statusCode = resp.statusCode || resp.status || 0;\n  if (statusCode >= 400) {\n    return { json: { ...item, error: `http_${statusCode}`, html: '' } };\n  }\n\n  const html = typeof resp.body === 'string' ? resp.body : JSON.stringify(resp.body);\n  return { json: { ...item, html, fetched_at: new Date().toISOString() } };\n\n} catch (err) {\n  return { json: { ...item, error: String(err.message || err), html: '' } };\n}\n"
+      }
+    },
+    {
+      "id": "craw-0004-html-pars-er-n-ode001",
+      "name": "HTML Parser",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        860,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "/**\n * Nœud 3 : HTML Parser\n * Extrait le texte propre du HTML EITI.\n * - Supprime nav, footer, scripts, cookies, sidebar\n * - Extrait le contenu principal (article, main, .field--body)\n * - Pour requirements_page : découpe par sous-exigence (H3)\n * - Pour standard : retourne le texte complet\n * Produit des items prêts pour le chunker.\n */\n\n// Process ALL items from HTTP Fetch (one per URL)\nconst allItems = $input.all();\nconst allResults = [];\n\nfor (const inputItem of allItems) {\n  const item = inputItem.json;\n  if (!item.html || item.error) {\n    allResults.push({ json: { ...item, text: '', skip: true } });\n    continue;\n  }\n  const results = processItem(item);\n  allResults.push(...results);\n}\n\nreturn allResults;\n\nfunction processItem(item) {\nconst html = String(item.html);\nconst parseMode = item.parse_mode || 'standard';\nconst baseUrl = item.url || '';\nconst documentType = item.document_type || 'note_orientation';\n\n// ── Utilitaires HTML ──────────────────────────────────────────────────────────\n\nfunction stripTags(h) {\n  return String(h || '')\n    .replace(/<script[\\s\\S]*?<\\/script>/gi, ' ')\n    .replace(/<style[\\s\\S]*?<\\/style>/gi, ' ')\n    .replace(/<nav[\\s\\S]*?<\\/nav>/gi, ' ')\n    .replace(/<footer[\\s\\S]*?<\\/footer>/gi, ' ')\n    .replace(/<header[\\s\\S]*?<\\/header>/gi, ' ')\n    .replace(/<aside[\\s\\S]*?<\\/aside>/gi, ' ')\n    .replace(/<!--[\\s\\S]*?-->/g, ' ')\n    .replace(/<br\\s*\\/?>/gi, '\\n')\n    .replace(/<\\/p>/gi, '\\n\\n')\n    .replace(/<\\/h[1-6]>/gi, '\\n\\n')\n    .replace(/<\\/li>/gi, '\\n')\n    .replace(/<\\/tr>/gi, '\\n')\n    .replace(/<td[^>]*>/gi, ' | ')\n    .replace(/<[^>]+>/g, ' ')\n    .replace(/&nbsp;/g, ' ')\n    .replace(/&amp;/g, '&')\n    .replace(/&lt;/g, '<')\n    .replace(/&gt;/g, '>')\n    .replace(/&quot;/g, '\"')\n    .replace(/&#39;/g, \"'\")\n    .replace(/&[a-z]+;/gi, ' ')\n    .replace(/[ \\t]+/g, ' ')\n    .replace(/\\n[ \\t]+/g, '\\n')\n    .replace(/\\n{3,}/g, '\\n\\n')\n    .trim();\n}\n\nfunction extractMainContent(h) {\n  // Essayer d'extraire le contenu principal dans cet ordre de priorité\n  const patterns = [\n    /<article[^>]*>([\\s\\S]*?)<\\/article>/i,\n    /<main[^>]*>([\\s\\S]*?)<\\/main>/i,\n    /class=\"[^\"]*field--body[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/i,\n    /class=\"[^\"]*node__content[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/i,\n    /class=\"[^\"]*content[^\"]*\"[^>]*>([\\s\\S]*?)<\\/div>/i,\n    /<body[^>]*>([\\s\\S]*?)<\\/body>/i,\n  ];\n  for (const pat of patterns) {\n    const m = h.match(pat);\n    if (m && m[1] && m[1].length > 500) return m[1];\n  }\n  return h;\n}\n\nfunction extractTitle(h) {\n  const m = h.match(/<h1[^>]*>([\\s\\S]*?)<\\/h1>/i);\n  if (m) return stripTags(m[1]).trim();\n  const t = h.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i);\n  if (t) return stripTags(t[1]).replace(/\\s*[|\\-–].*$/, '').trim();\n  return '';\n}\n\nfunction hashDocId(str) {\n  let h = 2166136261;\n  for (let i = 0; i < str.length; i++) {\n    h ^= str.charCodeAt(i);\n    h = Math.imul(h, 16777619);\n  }\n  return 'web_' + (h >>> 0).toString(16);\n}\n\nfunction docIdFromUrl(url) {\n  return hashDocId(String(url || '').replace(/^https?:\\/\\/eiti\\.org/, '').replace(/[\\/\\s]+/g, '_'));\n}\n\nfunction slugFromUrl(url) {\n  return String(url || '').replace(/^https?:\\/\\/eiti\\.org\\/fr\\//, '').replace(/\\/$/, '');\n}\n\n// ── Mode : page des exigences (découpage par sous-exigence) ───────────────────\nfunction parseRequirementsPage(html, baseItem) {\n  const main = extractMainContent(html);\n  const pageTitle = extractTitle(html);\n\n  // Trouver tous les blocs H2/H3 avec leur contenu\n  // Pattern : chercher les sections <h2> et <h3> et capturer jusqu'au prochain même niveau\n  const results = [];\n  const documentId = docIdFromUrl(baseItem.url);\n\n  // Extraire toutes les sections délimitées par H2/H3\n  const sectionPattern = /<(h[23])[^>]*(?:id=\"([^\"]*)\")?[^>]*>([\\s\\S]*?)<\\/h[23]>([\\s\\S]*?)(?=<h[23]|$)/gi;\n  let match;\n\n  while ((match = sectionPattern.exec(main)) !== null) {\n    const level = match[1]; // h2 ou h3\n    const headingId = match[2] || '';\n    const headingHtml = match[3];\n    const contentHtml = match[4] || '';\n\n    const headingText = stripTags(headingHtml).trim();\n    const contentText = stripTags(contentHtml).trim();\n\n    if (!headingText || contentText.length < 50) continue;\n\n    // Détecter requirement_hint depuis le titre de section\n    let reqHint = '';\n    const reqMatch = headingText.match(/\\b([1-7])[\\._]([0-9]{1,2})(?:[\\._]([a-z]))?\\b/i);\n    if (reqMatch) {\n      reqHint = reqMatch[3] ? `${reqMatch[1]}.${reqMatch[2]}.${reqMatch[3]}` : `${reqMatch[1]}.${reqMatch[2]}`;\n    }\n    const chapterMatch = headingText.match(/exigence\\s+([1-7])\\b/i);\n    const chapter = chapterMatch ? chapterMatch[1] : (reqHint ? reqHint.split('.')[0] : '');\n\n    const fullText = headingText + '\\n\\n' + contentText;\n\n    results.push({\n      json: {\n        chunk: fullText,\n        embedding_text: fullText,\n        source: baseItem.url,\n        source_path: baseItem.url,\n        document_id: documentId + '_' + (headingId || headingText.slice(0, 20).replace(/\\s/g, '_')),\n        ingest_source: 'url',\n        chunk_index: results.length,\n        metadata: {\n          source: baseItem.url,\n          filename: slugFromUrl(baseItem.url),\n          source_path: baseItem.url,\n          title: headingText,\n          document_id: documentId,\n          type: 'html',\n          content_type: 'text/html',\n          chunk_index: results.length,\n          chunk_size_target: 720,\n          chunk_overlap: 120,\n          ingest_profile: 'web_crawler_eiti_v1',\n          document_type: baseItem.document_type || 'norme_itie',\n          section_path: headingText,\n          requirement_hint: reqHint || undefined,\n          itie_chapter: chapter || undefined,\n          chunk_type: 'narrative_section',\n          has_table: false,\n          has_example: false,\n          page_title: pageTitle,\n          scraped_at: baseItem.fetched_at,\n          heading_level: level,\n        },\n      }\n    });\n  }\n\n  if (!results.length) {\n    // Fallback : tout le texte d'un coup\n    const fullText = stripTags(main);\n    if (fullText.length > 100) {\n      results.push({\n        json: {\n          chunk: fullText,\n          embedding_text: fullText,\n          source: baseItem.url,\n          source_path: baseItem.url,\n          document_id: documentId,\n          ingest_source: 'url',\n          chunk_index: 0,\n          metadata: {\n            source: baseItem.url,\n            filename: slugFromUrl(baseItem.url),\n            source_path: baseItem.url,\n            title: pageTitle,\n            document_id: documentId,\n            type: 'html',\n            content_type: 'text/html',\n            chunk_index: 0,\n            ingest_profile: 'web_crawler_eiti_v1',\n            document_type: baseItem.document_type || 'norme_itie',\n            chunk_type: 'narrative_section',\n            scraped_at: baseItem.fetched_at,\n          },\n        }\n      });\n    }\n  }\n\n  return results;\n}\n\n// ── Mode standard : texte complet → chunker ───────────────────────────────────\nfunction parseStandardPage(html, baseItem) {\n  const main = extractMainContent(html);\n  const pageTitle = item.title || extractTitle(html);\n  const text = stripTags(main);\n\n  if (text.length < 100) {\n    return [{ json: { ...baseItem, text: '', skip: true } }];\n  }\n\n  const documentId = docIdFromUrl(baseItem.url);\n\n  // Détecter requirement_hint dans le texte\n  let reqHint = baseItem.requirement_hint || '';\n  if (!reqHint) {\n    const m = text.match(/Exigence\\s+([1-7])[\\._]([0-9]{1,2})/i);\n    if (m) reqHint = m[1] + '.' + m[2];\n  }\n  const chapter = reqHint ? reqHint.split('.')[0] : '';\n\n  return [{\n    json: {\n      // Champs attendus par le chunker hybride existant\n      text,\n      data: text,\n      path: baseItem.url,\n      filePath: baseItem.url,\n      fileName: slugFromUrl(baseItem.url) + '.html',\n      name: slugFromUrl(baseItem.url) + '.html',\n      ingest_source: 'url',\n      content_type: 'text/html',\n      source_title: pageTitle,\n      // Metadata pré-remplie pour guider le chunker\n      _meta_override: {\n        document_type: baseItem.document_type,\n        requirement_hint: reqHint || undefined,\n        itie_chapter: chapter || undefined,\n        scraped_at: baseItem.fetched_at,\n        page_url: baseItem.url,\n      },\n    }\n  }];\n}\n\n// ── Dispatch ──────────────────────────────────────────────────────────────────\nif (parseMode === 'requirements_page') {\n  return parseRequirementsPage(html, item);\n}\nreturn parseStandardPage(html, item);\n} // end processItem\n"
+      }
+    },
+    {
+      "id": "craw-0005-web-chun-ker-n-ode001",
+      "name": "Web Chunker",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        400
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "/**\n * Nœud 4 : Web Chunker\n * Adapte le chunker PDF existant pour le contenu HTML scrappé.\n * - Si l'item vient du parseRequirementsPage (a déjà chunk + metadata) → pass-through\n * - Si l'item vient du parseStandardPage (a text brut) → découpage hybride\n */\n\nfunction envInt(name, def) {\n  try {\n    if (typeof process === 'undefined') return def;\n    const v = (process.env[name] || '').trim();\n    if (!v) return def;\n    const n = parseInt(v, 10);\n    return Number.isFinite(n) && n > 0 ? n : def;\n  } catch (_) { return def; }\n}\n\nconst CHUNK_TARGET = envInt('INGEST_CHUNK_CHARS', 720);\nconst OVERLAP = envInt('INGEST_OVERLAP_CHARS', 120);\nconst CHUNK_HARD_MAX = envInt('INGEST_CHUNK_MAX', 2200);\n\nconst items = $input.all();\nconst out = [];\n\nfunction hashDocId(str) {\n  let h = 2166136261;\n  for (let i = 0; i < str.length; i++) {\n    h ^= str.charCodeAt(i);\n    h = Math.imul(h, 16777619);\n  }\n  return 'web_' + (h >>> 0).toString(16);\n}\n\nfunction buildEmbeddingPrefix(meta) {\n  const parts = [];\n  if (meta.document_type) parts.push(meta.document_type.replace(/_/g, ' '));\n  if (meta.itie_chapter && !meta.requirement_hint) parts.push('ITIE chapitre exigence ' + meta.itie_chapter);\n  if (meta.requirement_hint) parts.push('ITIE exigence ' + meta.requirement_hint);\n  if (meta.section_path) parts.push(meta.section_path);\n  if (meta.title && !meta.section_path) parts.push(meta.title);\n  if (!parts.length) return '';\n  return '[' + parts.join(' | ') + ']\\n\\n';\n}\n\nfunction chunkText(text, target, overlap, hardMax) {\n  const chunks = [];\n  const paragraphs = text.split(/\\n{2,}/).map(p => p.trim()).filter(Boolean);\n  let buffer = [];\n  let bufLen = 0;\n\n  function flush() {\n    if (!buffer.length) return;\n    const combined = buffer.join('\\n\\n');\n    buffer = [];\n    bufLen = 0;\n    if (combined.length <= target) {\n      chunks.push(combined);\n      return;\n    }\n    // Découper le bloc trop long\n    let start = 0;\n    while (start < combined.length) {\n      let end = Math.min(start + hardMax, combined.length);\n      if (end - start > target && end < combined.length) {\n        end = Math.min(start + target, combined.length);\n        const sp = combined.lastIndexOf('. ', end);\n        if (sp > start + Math.floor(target * 0.45)) end = sp + 2;\n      }\n      const piece = combined.slice(start, end).trim();\n      if (piece) chunks.push(piece);\n      if (end >= combined.length) break;\n      start = Math.max(start + 1, end - overlap);\n    }\n  }\n\n  for (const para of paragraphs) {\n    if (bufLen + para.length + 2 > target && bufLen > 0) flush();\n    buffer.push(para);\n    bufLen = buffer.join('\\n\\n').length;\n  }\n  flush();\n  return chunks;\n}\n\nfor (const item of items) {\n  const j = item.json || {};\n\n  if (j.skip) continue;\n\n  // ── Cas 1 : item déjà chunké (requirements_page) → ajouter embedding_text ──\n  if (j.chunk && j.metadata) {\n    const meta = j.metadata;\n    const embedPrefix = buildEmbeddingPrefix(meta);\n    const embedding_text = embedPrefix + j.chunk;\n    out.push({\n      json: {\n        ...j,\n        embedding_text,\n      }\n    });\n    continue;\n  }\n\n  // ── Cas 2 : texte brut à découper (standard pages) ───────────────────────\n  const rawText = j.text || j.data || '';\n  if (!rawText || rawText.length < 50) continue;\n\n  const url = j.path || j.filePath || j.source || '';\n  const fileName = j.fileName || j.name || 'page.html';\n  const title = j.source_title || j._meta_override?.page_url || fileName;\n  const documentId = hashDocId(url || fileName);\n  const overrides = j._meta_override || {};\n\n  const chunks = chunkText(rawText, CHUNK_TARGET, OVERLAP, CHUNK_HARD_MAX);\n\n  chunks.forEach((chunk, idx) => {\n    // Détecter requirement_hint dans le chunk si pas déjà connu\n    let reqHint = overrides.requirement_hint || '';\n    if (!reqHint) {\n      const m = chunk.match(/Exigence\\s+([1-7])[\\._]([0-9]{1,2})/i);\n      if (m) reqHint = m[1] + '.' + m[2];\n    }\n    const chapter = reqHint ? reqHint.split('.')[0] : (overrides.itie_chapter || '');\n\n    const metadata = {\n      source: url,\n      filename: fileName,\n      source_path: url,\n      title,\n      document_id: documentId,\n      type: 'html',\n      content_type: 'text/html',\n      chunk_index: idx,\n      chunk_size_target: CHUNK_TARGET,\n      chunk_overlap: OVERLAP,\n      ingest_profile: 'web_crawler_eiti_v1',\n      document_type: overrides.document_type || 'note_orientation',\n      requirement_hint: reqHint || undefined,\n      itie_chapter: chapter || undefined,\n      chunk_type: 'narrative_section',\n      has_table: false,\n      has_example: false,\n      scraped_at: overrides.scraped_at,\n      page_url: url,\n    };\n\n    const embedPrefix = buildEmbeddingPrefix(metadata);\n    const embedding_text = embedPrefix + chunk;\n\n    out.push({\n      json: {\n        chunk,\n        embedding_text,\n        chunk_index: idx,\n        source: fileName,\n        source_path: url,\n        document_id: documentId,\n        metadata,\n      }\n    });\n  });\n}\n\nreturn out;\n"
+      }
+    },
+    {
+      "id": "craw-0006-loop-batc-h-64-node1",
+      "name": "Loop Over Chunks",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1300,
+        400
+      ],
+      "parameters": {
+        "batchSize": 64,
+        "options": {}
+      }
+    },
+    {
+      "id": "craw-0007-upse-rt-qd-rant-001",
+      "name": "Upsert dense + BM25 (Qdrant API)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1520,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "/* Upsert dense + BM25 — utilise embedding_text (préfixe contextuel) pour vecteur + sparse ;\n   payload.content = chunk affiché tel quel pour le LLM. */\nconst httpRequest = this.helpers.httpRequest.bind(this);\n\nconst COLLECTION = 'documents';\nconst OLLAMA_MODEL = 'nomic-embed-text:latest';\nconst BM25_TEXT_MAX = 32000;\nconst EMB_BATCH = 32;\nconst UPSERT_BATCH = 32;\nconst EMB_PARALLEL = 8;\n\nfunction envStr(name) {\n  try {\n    if (typeof process === 'undefined') return '';\n    const pe = process.env;\n    if (!pe || typeof pe[name] !== 'string') return '';\n    return pe[name];\n  } catch (_) {\n    return '';\n  }\n}\n\nfunction uuid4() {\n  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {\n    var r = (Math.random() * 16) | 0;\n    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);\n  });\n}\n\nasync function qdrantReq(method, url, headers, bodyObj) {\n  const reqOpts = {\n    method,\n    url,\n    headers,\n    json: true,\n    returnFullResponse: true,\n    ignoreHttpStatusErrors: true,\n  };\n  if (bodyObj !== undefined) reqOpts.body = bodyObj;\n  const resp = await httpRequest(reqOpts);\n  const code = resp.statusCode ?? resp.status ?? 0;\n  const body = resp.body ?? resp.data ?? resp;\n  if (code >= 400) {\n    const errTxt =\n      typeof body === 'string'\n        ? body\n        : body?.status?.error || JSON.stringify(body);\n    return { ok: false, code, error: errTxt, raw: body };\n  }\n  return { ok: true, code, data: body };\n}\n\nasync function embedTexts(ollamaBase, texts) {\n  try {\n    const res = await httpRequest({\n      method: 'POST',\n      url: ollamaBase + '/api/embed',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ model: OLLAMA_MODEL, input: texts }),\n      json: true,\n    });\n    const embs = res && res.embeddings;\n    if (Array.isArray(embs) && embs.length === texts.length) {\n      return embs;\n    }\n  } catch (_) {}\n  const out = new Array(texts.length);\n  for (let i = 0; i < texts.length; i += EMB_PARALLEL) {\n    const slice = texts.slice(i, i + EMB_PARALLEL);\n    const baseIdx = i;\n    await Promise.all(\n      slice.map((t, k) =>\n        httpRequest({\n          method: 'POST',\n          url: ollamaBase + '/api/embeddings',\n          headers: { 'Content-Type': 'application/json' },\n          body: JSON.stringify({ model: OLLAMA_MODEL, prompt: t }),\n          json: true,\n        }).then((r) => {\n          out[baseIdx + k] = r.embedding;\n        }),\n      ),\n    );\n  }\n  return out;\n}\n\nlet baseUrl = '';\nlet apiKey = '';\nif (typeof this.getCredentials === 'function') {\n  try {\n    const q = await this.getCredentials('qdrantApi');\n    baseUrl = String(q.url || '').replace(/\\/$/, '');\n    apiKey = q.apiKey || q.api_key || '';\n  } catch (_) {}\n}\nif (!baseUrl)\n  baseUrl = String(envStr('QDRANT_URL') || 'http://127.0.0.1:6333').replace(\n    /\\/$/,\n    '',\n  );\n\nlet ollamaBase = '';\nif (typeof this.getCredentials === 'function') {\n  try {\n    const o = await this.getCredentials('ollamaApi');\n    ollamaBase = String(o.baseUrl || o.host || o.url || '').replace(/\\/$/, '');\n  } catch (_) {}\n}\nif (!ollamaBase)\n  ollamaBase = String(envStr('OLLAMA_URL') || 'http://127.0.0.1:11434').replace(\n    /\\/$/,\n    '',\n  );\n\nconst qH = { 'Content-Type': 'application/json' };\nif (apiKey) qH['api-key'] = apiKey;\n\nlet qdrantVersion = '';\ntry {\n  const ri = await httpRequest({\n    method: 'GET',\n    url: baseUrl,\n    headers: qH,\n    json: true,\n  });\n  if (ri && ri.version) qdrantVersion = ri.version;\n} catch (_) {}\n\nconst colRes = await qdrantReq(\n  'GET',\n  baseUrl + '/collections/' + encodeURIComponent(COLLECTION),\n  qH,\n  undefined,\n);\nif (!colRes.ok) {\n  throw new Error(\n    'Collection \"' +\n      COLLECTION +\n      '\" introuvable (' +\n      colRes.code +\n      '). Lancez Setup. ' +\n      String(colRes.error).slice(0, 500),\n  );\n}\nconst colData =\n  colRes.data && colRes.data.result !== undefined\n    ? colRes.data.result\n    : colRes.data;\nconst colParams =\n  (colData && colData.config && colData.config.params) || colData.params || {};\nconst vectors = colParams.vectors || {};\nlet expectedDim = null;\nif (vectors.dense && vectors.dense.size) expectedDim = vectors.dense.size;\nelse if (typeof vectors.size === 'number') expectedDim = vectors.size;\nconst sparseKeys = Object.keys(colParams.sparse_vectors || {});\nif (sparseKeys.indexOf('text-bm25') < 0) {\n  throw new Error(\n    'Sparse \"text-bm25\" absent. Recréez la collection (DROP_COLLECTION_FIRST=true).',\n  );\n}\n\nconst upsertUrl =\n  baseUrl +\n  '/collections/' +\n  encodeURIComponent(COLLECTION) +\n  '/points?wait=false';\nconst rows = $input.all();\n\nconst chunks = [];\nfor (let i = 0; i < rows.length; i++) {\n  const json = rows[i].json || {};\n  const raw = json.chunk;\n  if (!raw || !String(raw).trim()) continue;\n  const embedSrc = json.embedding_text || json.chunk;\n  const safe = String(raw).replace(/\\0/g, '');\n  const safeEmbed = String(embedSrc).replace(/\\0/g, '');\n  const bm25Src =\n    safeEmbed.length > BM25_TEXT_MAX\n      ? safeEmbed.slice(0, BM25_TEXT_MAX)\n      : safeEmbed;\n  const meta = json.metadata || { source: json.source, type: 'pdf' };\n  chunks.push({\n    idx: i,\n    text: safe,\n    embedText: safeEmbed,\n    bm25: bm25Src,\n    meta,\n    source: json.source,\n    chunk_index: json.chunk_index,\n  });\n}\n\nconst embeddings = [];\nfor (let b = 0; b < chunks.length; b += EMB_BATCH) {\n  const slice = chunks.slice(b, b + EMB_BATCH);\n  const vecs = await embedTexts(\n    ollamaBase,\n    slice.map(function (c) {\n      return c.embedText;\n    }),\n  );\n  for (let k = 0; k < vecs.length; k++) {\n    var emb = vecs[k];\n    if (!Array.isArray(emb) || !emb.length) {\n      throw new Error('[chunk ' + slice[k].idx + '] Ollama: embedding vide');\n    }\n    if (expectedDim != null && emb.length !== expectedDim) {\n      throw new Error(\n        '[chunk ' +\n          slice[k].idx +\n          '] Dimension=' +\n          emb.length +\n          ' vs collection=' +\n          expectedDim,\n      );\n    }\n    embeddings.push(emb);\n  }\n}\n\nconst results = [];\nfor (let b = 0; b < chunks.length; b += UPSERT_BATCH) {\n  var batchChunks = chunks.slice(b, b + UPSERT_BATCH);\n  var batchEmbs = embeddings.slice(b, b + UPSERT_BATCH);\n  var points = batchChunks.map(function (c, k) {\n    const m = c.meta || {};\n    return {\n      id: uuid4(),\n      vector: {\n        dense: batchEmbs[k],\n        'text-bm25': {\n          text: c.bm25,\n          model: 'qdrant/bm25',\n          options: { language: 'french' },\n        },\n      },\n      payload: {\n        content: c.text,\n        page_content: c.text,\n        document_id: m.document_id,\n        source: c.source,\n        chunk_index: c.chunk_index,\n        metadata: m,\n        document_type: m.document_type,\n        chunk_type: m.chunk_type,\n        section_path: m.section_path,\n        requirement_hint: m.requirement_hint,\n      },\n    };\n  });\n\n  var res = await qdrantReq('PUT', upsertUrl, qH, { points: points });\n  if (!res.ok) {\n    throw new Error(\n      '[lot interne ' +\n        Math.floor(b / UPSERT_BATCH) +\n        '] Qdrant ' +\n        (qdrantVersion || '?') +\n        ' HTTP ' +\n        res.code +\n        ' : ' +\n        String(res.error).slice(0, 2000),\n    );\n  }\n\n  for (var k = 0; k < batchChunks.length; k++) {\n    results.push({\n      json: {\n        upserted: true,\n        pointId: points[k].id,\n        source: batchChunks[k].source,\n        chunk_index: batchChunks[k].chunk_index,\n      },\n    });\n  }\n}\n\nreturn results;\n"
+      },
+      "credentials": {
+        "qdrantApi": {
+          "id": "fdUD8PGs55JXUGZa",
+          "name": "QdrantApi account"
+        },
+        "ollamaApi": {
+          "id": "imNsiOICQnbBmguP",
+          "name": "Ollama account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Démarrer le crawler": {
+      "main": [
+        [
+          {
+            "node": "Seed URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Seed URLs": {
+      "main": [
+        [
+          {
+            "node": "HTTP Fetch Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Fetch Page": {
+      "main": [
+        [
+          {
+            "node": "HTML Parser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML Parser": {
+      "main": [
+        [
+          {
+            "node": "Web Chunker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Web Chunker": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Chunks": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Upsert dense + BM25 (Qdrant API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert dense + BM25 (Qdrant API)": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "EITI"
+    },
+    {
+      "name": "RAG"
+    },
+    {
+      "name": "Crawler"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2026-04-02T14:03:55.228Z",
+  "versionId": "1"
+}
