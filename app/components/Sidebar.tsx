@@ -1,13 +1,8 @@
 "use client";
 import Image from "next/image";
 import { useState } from "react";
-
-const SUGGESTIONS = [
-  "Comment mettre en œuvre l'exigence 1.1 sur l'engagement du gouvernement ?",
-  "Quelles sont les obligations des entreprises extractives selon l'exigence 1.2 ?",
-  "Comment divulguer les bénéficiaires effectifs (exigence 2.5) ?",
-  "Quelles étapes pour satisfaire l'exigence 4.1 sur la déclaration exhaustive ?",
-];
+import { useLang } from "../lib/LangContext";
+import { t } from "../lib/i18n";
 
 interface Props {
   isOpen: boolean;
@@ -18,17 +13,17 @@ interface Props {
 
 export default function Sidebar({ isOpen, onClose, onNewChat, onPickQuestion }: Props) {
   const [logoError, setLogoError] = useState(false);
+  const { lang, toggle } = useLang();
+  const tr = t(lang);
 
   return (
     <>
-      {/* Overlay mobile */}
       <div
         className={`sidebar-overlay${isOpen ? " open" : ""}`}
         onClick={onClose}
       />
 
-      <div className={`sidebar${isOpen ? " open" : ""}`}>
-        {/* Header */}
+      <div className={`sidebar${isOpen ? " open" : ""}`} dir={lang === "ar" ? "rtl" : "ltr"}>
         <div className="sidebar-header">
           {!logoError ? (
             <div className="sidebar-logo-wrap">
@@ -54,24 +49,27 @@ export default function Sidebar({ isOpen, onClose, onNewChat, onPickQuestion }: 
             </div>
           )}
           <div>
-            <div className="sidebar-title">MREITI BOT</div>
-            <div className="sidebar-subtitle">MREITI · ITIE Mauritanie</div>
+            <div className="sidebar-title">{tr.botName}</div>
+            <div className="sidebar-subtitle">{tr.subtitle}</div>
           </div>
         </div>
 
-        {/* New chat */}
+        {/* Lang toggle */}
+        <button className="lang-toggle-btn" onClick={toggle}>
+          {lang === "fr" ? "🇲🇷 العربية" : "🇫🇷 Français"}
+        </button>
+
         <button className="new-chat-btn" onClick={onNewChat}>
           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
-          Nouvelle conversation
+          {tr.newChat}
         </button>
 
-        <div className="sidebar-section-label">Questions suggérées</div>
+        <div className="sidebar-section-label">{tr.suggestedQuestions}</div>
 
-        {/* Suggestions */}
         <div className="sidebar-suggestions">
-          {SUGGESTIONS.map((q) => (
+          {tr.suggestions.map((q) => (
             <button
               key={q}
               className="sidebar-suggestion-btn"
@@ -87,10 +85,9 @@ export default function Sidebar({ isOpen, onClose, onNewChat, onPickQuestion }: 
           ))}
         </div>
 
-        {/* Footer */}
         <div className="sidebar-footer">
           <div className="status-dot" />
-          <span className="status-label">En ligne</span>
+          <span className="status-label">{tr.online}</span>
         </div>
       </div>
     </>

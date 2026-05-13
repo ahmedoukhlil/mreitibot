@@ -1,5 +1,7 @@
 "use client";
 import { useRef, useEffect, KeyboardEvent } from "react";
+import { useLang } from "../lib/LangContext";
+import { t } from "../lib/i18n";
 
 interface Props {
   value: string;
@@ -10,6 +12,8 @@ interface Props {
 
 export default function InputArea({ value, onChange, onSend, disabled }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { lang } = useLang();
+  const tr = t(lang);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -28,13 +32,13 @@ export default function InputArea({ value, onChange, onSend, disabled }: Props) 
   const canSend = !disabled && value.trim() !== "";
 
   return (
-    <div className="input-area">
+    <div className="input-area" dir={lang === "ar" ? "rtl" : "ltr"}>
       <div className="input-area-inner">
         <div className="input-box">
           <textarea
             ref={textareaRef}
             rows={1}
-            placeholder="Posez votre question sur l'ITIE…"
+            placeholder={tr.placeholder}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKey}
@@ -53,7 +57,7 @@ export default function InputArea({ value, onChange, onSend, disabled }: Props) 
           </div>
         </div>
         <p className="input-hint">
-          <kbd>Enter</kbd> pour envoyer · <kbd>Shift+Enter</kbd> pour nouvelle ligne
+          <kbd>Enter</kbd> {tr.hint} · <kbd>Shift+Enter</kbd> {tr.hintNewLine}
         </p>
       </div>
     </div>

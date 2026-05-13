@@ -34,7 +34,7 @@ html, body { overflow: hidden; max-width: 100%; }
   --error-bg: #fff3f0;
   --error-border: #fcd5c8;
   --error-text: #b94520;
-  --font: 'Poppins', system-ui, sans-serif;
+  --font: var(--font-poppins, 'Poppins'), var(--font-arabic, 'Noto Sans Arabic'), system-ui, sans-serif;
   --radius-lg: 16px;
   --radius-md: 12px;
   --radius-sm: 8px;
@@ -110,6 +110,37 @@ html, body {
   color: var(--sidebar-text);
   opacity: 0.65;
   margin-top: 1px;
+}
+
+.lang-toggle-btn {
+  margin: 10px 12px 2px;
+  padding: 7px 14px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: var(--radius-sm);
+  color: #e8f0fa;
+  font-size: 13px;
+  font-family: var(--font);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: calc(100% - 24px);
+  transition: background 0.15s, border-color 0.15s;
+  letter-spacing: 0.01em;
+}
+
+.lang-toggle-btn:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.28);
+}
+
+.lang-toggle-mobile {
+  margin: 0;
+  padding: 4px 10px;
+  width: auto;
+  font-size: 13px;
 }
 
 .new-chat-btn {

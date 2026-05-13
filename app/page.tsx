@@ -4,6 +4,8 @@ import Sidebar from "./components/Sidebar";
 import Thread, { Message, ThreadHandle } from "./components/Thread";
 import InputArea from "./components/InputArea";
 import { renderMarkdown } from "./lib/markdown";
+import { useLang } from "./lib/LangContext";
+import { t } from "./lib/i18n";
 
 const WEBHOOK_URL = "/api/chat";
 const HISTORY_MAX = 16;
@@ -16,6 +18,8 @@ function trunc(s: string, max: number) {
 }
 
 export default function ChatPage() {
+  const { lang, toggle } = useLang();
+  const tr = t(lang);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [showWelcome, setShowWelcome] = useState(true);
@@ -103,7 +107,7 @@ export default function ChatPage() {
     } catch {
       setMessages((prev) => [
         ...prev.filter((m) => m.type !== "typing"),
-        { type: "error", text: "Impossible de joindre le serveur. Vérifiez votre connexion." },
+        { type: "error", text: tr.error },
       ]);
     } finally {
       setLoading(false);
@@ -130,14 +134,17 @@ export default function ChatPage() {
         onPickQuestion={handlePick}
       />
 
-      <div className="chat-main" ref={chatMainRef}>
+      <div className="chat-main" ref={chatMainRef} dir={lang === "ar" ? "rtl" : "ltr"}>
         <div className="mobile-header">
           <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <span className="mobile-header-title">MREITI BOT</span>
+          <span className="mobile-header-title">{tr.botName}</span>
+          <button className="lang-toggle-btn lang-toggle-mobile" onClick={toggle}>
+            {lang === "fr" ? "ع" : "FR"}
+          </button>
         </div>
 
         <Thread
