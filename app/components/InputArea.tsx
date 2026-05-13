@@ -32,7 +32,7 @@ export default function InputArea({ value, onChange, onSend, disabled }: Props) 
   const canSend = !disabled && value.trim() !== "";
 
   return (
-    <div className="input-area" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="input-area">
       <div className="input-area-inner">
         <div className="input-box">
           <textarea

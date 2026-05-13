@@ -23,7 +23,7 @@ export default function Sidebar({ isOpen, onClose, onNewChat, onPickQuestion }: 
         onClick={onClose}
       />
 
-      <div className={`sidebar${isOpen ? " open" : ""}`} dir={lang === "ar" ? "rtl" : "ltr"}>
+      <div className={`sidebar${isOpen ? " open" : ""}`}>
         <div className="sidebar-header">
           {!logoError ? (
             <div className="sidebar-logo-wrap">

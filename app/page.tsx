@@ -126,7 +126,7 @@ export default function ChatPage() {
   }, []);
 
   return (
-    <div className="app">
+    <div className="app" dir={lang === "ar" ? "rtl" : "ltr"}>
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -134,7 +134,7 @@ export default function ChatPage() {
         onPickQuestion={handlePick}
       />
 
-      <div className="chat-main" ref={chatMainRef} dir={lang === "ar" ? "rtl" : "ltr"}>
+      <div className="chat-main" ref={chatMainRef}>
         <div className="mobile-header">
           <button className="mobile-menu-btn" onClick={() => setSidebarOpen(true)}>
             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
