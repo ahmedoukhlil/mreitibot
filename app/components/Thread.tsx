@@ -2,6 +2,8 @@
 import { forwardRef, useImperativeHandle, useRef } from "react";
 import Image from "next/image";
 import Welcome from "./Welcome";
+import { useLang } from "../lib/LangContext";
+import { t } from "../lib/i18n";
 
 export type Message =
   | { type: "user"; text: string }
@@ -45,6 +47,8 @@ const Thread = forwardRef<ThreadHandle, Props>(function Thread(
   ref
 ) {
   const threadRef = useRef<HTMLDivElement>(null);
+  const { lang } = useLang();
+  const tr = t(lang);
 
   useImperativeHandle(ref, () => ({
     updateLastBot(html: string) {
@@ -101,7 +105,7 @@ const Thread = forwardRef<ThreadHandle, Props>(function Thread(
             <div key={i} className="typing-wrapper">
               <BotAvatar />
               <div className="typing-text">
-                MREITI BOT est en train de réfléchir
+                {tr.thinking}
                 <span className="typing-ellipsis" />
               </div>
             </div>
