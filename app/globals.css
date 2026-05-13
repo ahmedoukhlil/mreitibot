@@ -768,6 +768,7 @@ html, body {
   .sidebar {
     position: fixed;
     left: 0;
+    right: auto;
     top: 0;
     bottom: 0;
     z-index: 50;
@@ -777,6 +778,14 @@ html, body {
   }
 
   .sidebar.open { transform: translateX(0); }
+
+  [dir="rtl"] .sidebar {
+    left: auto;
+    right: 0;
+    transform: translateX(100%);
+  }
+
+  [dir="rtl"] .sidebar.open { transform: translateX(0); }
   .sidebar-overlay.open { display: block; }
   .mobile-header { display: flex; }
 
@@ -811,16 +820,6 @@ html, body {
 }
 
 /* ── RTL overrides ── */
-[dir="rtl"] .sidebar {
-  left: auto;
-  right: 0;
-  transform: translateX(100%);
-}
-
-[dir="rtl"] .sidebar.open {
-  transform: translateX(0);
-}
-
 [dir="rtl"] .sidebar-suggestion-btn {
   text-align: right;
 }
