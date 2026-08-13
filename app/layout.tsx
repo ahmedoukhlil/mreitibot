@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 import { LangProvider } from "./lib/LangContext";
+import ServiceWorkerRegister from "./components/ServiceWorkerRegister";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -18,6 +19,16 @@ const notoArabic = Noto_Sans_Arabic({
 export const metadata: Metadata = {
   title: "MREITI BOT — MREITI",
   description: "MREITI BOT — Assistant documentaire MREITI / ITIE Mauritanie",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "MREITI BOT",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -25,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" className={`${poppins.variable} ${notoArabic.variable}`}>
       <body>
         <LangProvider>{children}</LangProvider>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
