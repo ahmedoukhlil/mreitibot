@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const WEBHOOK = "http://163.245.209.96/webhook/chat";
+const WEBHOOK = "http://153.75.249.154:5678/webhook/chat";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
