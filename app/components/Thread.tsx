@@ -24,8 +24,6 @@ interface Props {
   onRegenerate: () => void;
   onRetry: () => void;
   loading: boolean;
-  /** ref vers le conteneur scrollable (.chat-main) passé depuis page.tsx */
-  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 function BotAvatar() {
@@ -72,7 +70,7 @@ const BotMessage = memo(function BotMessage({
 });
 
 const Thread = forwardRef<ThreadHandle, Props>(function Thread(
-  { messages, showWelcome, onPick, onRegenerate, onRetry, loading, scrollContainerRef },
+  { messages, showWelcome, onPick, onRegenerate, onRetry, loading },
   ref
 ) {
   const threadRef = useRef<HTMLDivElement>(null);
@@ -123,7 +121,7 @@ const Thread = forwardRef<ThreadHandle, Props>(function Thread(
           if (msg.type === "error") {
             return (
               <div key={i} className="message message-error">
-                <div className="bot-avatar" style={{ background: "#c0392b" }}>
+                <div className="bot-avatar" style={{ background: "var(--error-text)" }}>
                   <span className="bot-avatar-letter">!</span>
                 </div>
                 <div className="error-content-wrap">

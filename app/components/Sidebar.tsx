@@ -56,7 +56,7 @@ export default function Sidebar({
             <div
               style={{
                 width: 34, height: 34, borderRadius: 8,
-                background: "#006c35", display: "flex",
+                background: "var(--accent)", display: "flex",
                 alignItems: "center", justifyContent: "center",
                 color: "white", fontSize: 14, fontWeight: 700, flexShrink: 0,
               }}

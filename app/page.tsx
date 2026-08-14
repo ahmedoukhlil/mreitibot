@@ -44,7 +44,7 @@ export default function ChatPage() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [conversations, setConversations] = useState<StoredConversation[]>([]);
+  const [conversations, setConversations] = useState<StoredConversation[]>(listConversations);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const historyRef = useRef<HistoryEntry[]>([]);
   const threadRef = useRef<ThreadHandle>(null);
@@ -53,11 +53,6 @@ export default function ChatPage() {
   const activeConvRef = useRef<StoredConversation | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastUserMsgRef = useRef<string>("");
-
-  // Chargement initial : liste des conversations depuis localStorage.
-  useEffect(() => {
-    setConversations(listConversations());
-  }, []);
 
   const flushSave = useCallback(() => {
     if (saveTimerRef.current) {
@@ -244,15 +239,14 @@ export default function ChatPage() {
     await runTurn(msg);
   }, [input, loading, runTurn]);
 
-  const regenerate = useCallback(() => {
+  // regenerate (dernière réponse bot) et retryLast (après erreur) font la même chose :
+  // renvoyer la dernière question utilisateur, en remplaçant la dernière réponse/erreur en place.
+  const replayLastTurn = useCallback(() => {
     if (loading || !lastUserMsgRef.current) return;
     runTurn(lastUserMsgRef.current, { replaceLast: true });
   }, [loading, runTurn]);
-
-  const retryLast = useCallback(() => {
-    if (loading || !lastUserMsgRef.current) return;
-    runTurn(lastUserMsgRef.current, { replaceLast: true });
-  }, [loading, runTurn]);
+  const regenerate = replayLastTurn;
+  const retryLast = replayLastTurn;
 
   const stopGeneration = useCallback(() => {
     abortRef.current?.abort();
@@ -343,7 +337,6 @@ export default function ChatPage() {
           onRegenerate={regenerate}
           onRetry={retryLast}
           loading={loading}
-          scrollContainerRef={chatMainRef}
         />
 
         <InputArea

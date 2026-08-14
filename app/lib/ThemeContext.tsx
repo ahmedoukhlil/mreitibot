@@ -19,11 +19,7 @@ function readStoredTheme(): Theme {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("system");
-
-  useEffect(() => {
-    setThemeState(readStoredTheme());
-  }, []);
+  const [theme, setThemeState] = useState<Theme>(readStoredTheme);
 
   useEffect(() => {
     const root = document.documentElement;

@@ -18,11 +18,7 @@ function readStoredLang(): Lang {
 }
 
 export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>("fr");
-
-  useEffect(() => {
-    setLang(readStoredLang());
-  }, []);
+  const [lang, setLang] = useState<Lang>(readStoredLang);
 
   useEffect(() => {
     document.documentElement.lang = lang;
