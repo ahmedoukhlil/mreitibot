@@ -21,6 +21,7 @@ const WEBHOOK_URL = "/api/chat";
 const HISTORY_MAX = 16;
 const HISTORY_MAX_CHARS = 3500;
 const SAVE_DEBOUNCE_MS = 400;
+const REQUEST_TIMEOUT_MS = 55000;
 
 type HistoryEntry = { role: "user" | "assistant"; content: string };
 
@@ -124,6 +125,11 @@ export default function ChatPage() {
 
     const controller = new AbortController();
     abortRef.current = controller;
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, REQUEST_TIMEOUT_MS);
 
     try {
       const res = await fetch(WEBHOOK_URL, {
@@ -215,10 +221,11 @@ export default function ChatPage() {
       flushSave();
 
     } catch (err) {
-      if ((err as Error)?.name === "AbortError") {
+      const isAbort = (err as Error)?.name === "AbortError";
+      if (isAbort && !timedOut) {
         setMessages((prev) => prev.filter((m) => m.type !== "typing"));
       } else {
-        const message = err instanceof Error ? err.message : tr.error;
+        const message = isAbort ? tr.error : err instanceof Error ? err.message : tr.error;
         setMessages((prev) => [
           ...prev.filter((m) => m.type !== "typing"),
           { type: "error", text: message },
@@ -227,6 +234,7 @@ export default function ChatPage() {
         flushSave();
       }
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
       abortRef.current = null;
     }

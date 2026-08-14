@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
+export const maxDuration = 60;
 
 const N8N_WEBHOOK = "http://153.75.249.154:5678/webhook/chat";
 const N8N_LOG_WEBHOOK = "http://153.75.249.154:5678/webhook/log-completion";
