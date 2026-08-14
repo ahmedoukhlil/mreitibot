@@ -134,6 +134,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: OPENAI_MODEL,
         stream: true,
+        temperature: 0.2,
         messages: [{ role: "user", content: ragContext.prompt }],
       }),
     });
