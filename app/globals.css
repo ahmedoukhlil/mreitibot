@@ -306,6 +306,79 @@ html, body {
   border-color: rgba(255,255,255,0.25);
 }
 
+.install-pwa-btn {
+  margin: 0 12px 10px;
+  padding: 9px 14px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius-sm);
+  color: #e8f0fa;
+  font-size: 13px;
+  font-family: var(--font);
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s, border-color 0.15s;
+  text-align: left;
+  letter-spacing: -0.01em;
+  width: calc(100% - 24px);
+}
+
+.install-pwa-btn:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.25);
+}
+
+.install-ios-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.install-ios-modal {
+  background: var(--chat-bg);
+  color: var(--text-primary);
+  border-radius: 16px 16px 0 0;
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.2);
+}
+
+.install-ios-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.install-ios-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.install-ios-close {
+  margin-top: 12px;
+  width: 100%;
+  padding: 10px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
 .sidebar-section-label {
   padding: 16px 14px 8px;
   font-size: 10px;
@@ -1214,7 +1287,8 @@ html, body {
 }
 
 [dir="rtl"] .new-chat-btn,
-[dir="rtl"] .lang-toggle-btn {
+[dir="rtl"] .lang-toggle-btn,
+[dir="rtl"] .install-pwa-btn {
   text-align: right;
 }
 

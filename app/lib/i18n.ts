@@ -24,6 +24,11 @@ export const translations = {
     thinking: "MREITI BOT est en train de réfléchir",
     botName: "MREITI BOT",
     subtitle: "MREITI · ITIE Mauritanie",
+    installApp: "Installer l'application",
+    installIosTitle: "Installer sur iPhone/iPad",
+    installIosStep1: "Appuyez sur le bouton Partager",
+    installIosStep2: "puis sur « Sur l'écran d'accueil »",
+    installClose: "Fermer",
   },
   ar: {
     welcomeTitle: "كيف يمكنني",
@@ -48,6 +53,11 @@ export const translations = {
     thinking: "MREITI BOT يفكّر…",
     botName: "MREITI BOT",
     subtitle: "MREITI · ITIE موريتانيا",
+    installApp: "تثبيت التطبيق",
+    installIosTitle: "التثبيت على iPhone/iPad",
+    installIosStep1: "اضغط على زر المشاركة",
+    installIosStep2: "ثم على «إضافة إلى الشاشة الرئيسية»",
+    installClose: "إغلاق",
   },
 } as const;
 

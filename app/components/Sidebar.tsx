@@ -5,6 +5,7 @@ import { useLang } from "../lib/LangContext";
 import { t } from "../lib/i18n";
 import ConversationList from "./ConversationList";
 import ThemeToggle from "./ThemeToggle";
+import InstallPWAButton from "./InstallPWAButton";
 import type { StoredConversation } from "../lib/storage";
 
 interface Props {
@@ -102,6 +103,8 @@ export default function Sidebar({
           onRename={onRenameConversation}
           onDelete={onDeleteConversation}
         />
+
+        <InstallPWAButton />
 
         <div className="sidebar-footer">
           <div className="status-dot" />
