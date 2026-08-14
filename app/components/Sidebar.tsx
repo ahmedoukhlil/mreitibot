@@ -67,9 +67,24 @@ export default function Sidebar({
           <div className="sidebar-title-wrap">
             <div className="sidebar-title">{tr.botName}</div>
           </div>
-          <button className="lang-flag-btn" onClick={toggle} aria-label="lang" title={lang === "fr" ? "العربية" : "Français"}>
-            {lang === "fr" ? "🇲🇷" : "🇫🇷"}
-          </button>
+          <div className="lang-flag-switch">
+            <button
+              className={`lang-flag-option${lang === "fr" ? " active" : ""}`}
+              onClick={() => lang !== "fr" && toggle()}
+              aria-label="Français"
+              title="Français"
+            >
+              🇫🇷
+            </button>
+            <button
+              className={`lang-flag-option${lang === "ar" ? " active" : ""}`}
+              onClick={() => lang !== "ar" && toggle()}
+              aria-label="العربية"
+              title="العربية"
+            >
+              🇲🇷
+            </button>
+          </div>
           <ThemeToggle />
         </div>
 

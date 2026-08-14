@@ -209,29 +209,45 @@ html, body {
   text-overflow: ellipsis;
 }
 
-.lang-flag-btn {
+.lang-flag-switch {
   margin-left: auto;
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 9px;
+}
+
+[dir="rtl"] .lang-flag-switch {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.lang-flag-option {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: transparent;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 14px;
-  transition: background 0.15s;
+  font-size: 13px;
+  opacity: 0.5;
+  transition: background 0.15s, opacity 0.15s;
 }
 
-.lang-flag-btn:hover {
-  background: rgba(255,255,255,0.12);
+.lang-flag-option:hover {
+  opacity: 0.8;
 }
 
-[dir="rtl"] .lang-flag-btn {
-  margin-left: 0;
-  margin-right: auto;
+.lang-flag-option.active {
+  background: rgba(255,255,255,0.14);
+  opacity: 1;
 }
 
 .lang-toggle-btn {
