@@ -1,18 +1,19 @@
 "use client";
-import { forwardRef, useImperativeHandle, useRef } from "react";
+import { forwardRef, memo, useImperativeHandle, useRef } from "react";
 import Image from "next/image";
 import Welcome from "./Welcome";
+import MessageActions from "./MessageActions";
+import { parseMarkdown } from "../lib/markdown";
 import { useLang } from "../lib/LangContext";
 import { t } from "../lib/i18n";
 
 export type Message =
   | { type: "user"; text: string }
-  | { type: "bot"; html: string }
+  | { type: "bot"; content: string }
   | { type: "error"; text: string }
   | { type: "typing" };
 
 export interface ThreadHandle {
-  updateLastBot(html: string): void;
   scrollToUserMessage(): void;
 }
 
@@ -20,6 +21,9 @@ interface Props {
   messages: Message[];
   showWelcome: boolean;
   onPick: (q: string) => void;
+  onRegenerate: () => void;
+  onRetry: () => void;
+  loading: boolean;
   /** ref vers le conteneur scrollable (.chat-main) passé depuis page.tsx */
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
 }
@@ -42,8 +46,33 @@ function BotAvatar() {
   );
 }
 
+/**
+ * Mémoïsé : ne recalcule parseMarkdown que lorsque `content` change réellement.
+ * Sans ça, chaque chunk du message en cours de streaming force le re-parsing
+ * de tous les messages bot précédents du thread à chaque render.
+ */
+const BotMessage = memo(function BotMessage({
+  content,
+  isLast,
+  onRegenerate,
+}: {
+  content: string;
+  isLast: boolean;
+  onRegenerate: () => void;
+}) {
+  return (
+    <div className="message message-bot">
+      <BotAvatar />
+      <div className="bot-content-wrap">
+        <div className="bot-content">{parseMarkdown(content)}</div>
+        <MessageActions content={content} onRegenerate={isLast ? onRegenerate : undefined} />
+      </div>
+    </div>
+  );
+});
+
 const Thread = forwardRef<ThreadHandle, Props>(function Thread(
-  { messages, showWelcome, onPick, scrollContainerRef },
+  { messages, showWelcome, onPick, onRegenerate, onRetry, loading, scrollContainerRef },
   ref
 ) {
   const threadRef = useRef<HTMLDivElement>(null);
@@ -51,13 +80,6 @@ const Thread = forwardRef<ThreadHandle, Props>(function Thread(
   const tr = t(lang);
 
   useImperativeHandle(ref, () => ({
-    updateLastBot(html: string) {
-      const thread = threadRef.current;
-      if (!thread) return;
-      const nodes = thread.querySelectorAll<HTMLElement>(".bot-content");
-      const last = nodes[nodes.length - 1];
-      if (last) last.innerHTML = html;
-    },
     scrollToUserMessage() {
       const thread = threadRef.current;
       if (!thread) return;
@@ -66,6 +88,14 @@ const Thread = forwardRef<ThreadHandle, Props>(function Thread(
       if (last) last.scrollIntoView({ block: "start", behavior: "smooth" });
     },
   }));
+
+  const lastBotIndex = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].type === "bot") return i;
+      if (messages[i].type === "typing") return -1; // en cours de génération, pas encore "dernier stable"
+    }
+    return -1;
+  })();
 
   return (
     <div className="thread" ref={threadRef}>
@@ -82,13 +112,12 @@ const Thread = forwardRef<ThreadHandle, Props>(function Thread(
           }
           if (msg.type === "bot") {
             return (
-              <div key={i} className="message message-bot">
-                <BotAvatar />
-                <div
-                  className="bot-content"
-                  dangerouslySetInnerHTML={{ __html: msg.html }}
-                />
-              </div>
+              <BotMessage
+                key={i}
+                content={msg.content}
+                isLast={i === lastBotIndex && !loading}
+                onRegenerate={onRegenerate}
+              />
             );
           }
           if (msg.type === "error") {
@@ -97,7 +126,18 @@ const Thread = forwardRef<ThreadHandle, Props>(function Thread(
                 <div className="bot-avatar" style={{ background: "#c0392b" }}>
                   <span className="bot-avatar-letter">!</span>
                 </div>
-                <div className="error-content">{msg.text}</div>
+                <div className="error-content-wrap">
+                  <div className="error-content">{msg.text}</div>
+                  {!loading && (
+                    <button className="retry-btn" onClick={onRetry}>
+                      <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M23 4v6h-6M1 20v-6h6" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+                      </svg>
+                      {tr.retry}
+                    </button>
+                  )}
+                </div>
               </div>
             );
           }

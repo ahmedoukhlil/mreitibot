@@ -3,15 +3,31 @@ import Image from "next/image";
 import { useState } from "react";
 import { useLang } from "../lib/LangContext";
 import { t } from "../lib/i18n";
+import ConversationList from "./ConversationList";
+import ThemeToggle from "./ThemeToggle";
+import type { StoredConversation } from "../lib/storage";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onNewChat: () => void;
-  onPickQuestion: (q: string) => void;
+  conversations: StoredConversation[];
+  activeConversationId: string | null;
+  onSelectConversation: (id: string) => void;
+  onRenameConversation: (id: string, title: string) => void;
+  onDeleteConversation: (id: string) => void;
 }
 
-export default function Sidebar({ isOpen, onClose, onNewChat, onPickQuestion }: Props) {
+export default function Sidebar({
+  isOpen,
+  onClose,
+  onNewChat,
+  conversations,
+  activeConversationId,
+  onSelectConversation,
+  onRenameConversation,
+  onDeleteConversation,
+}: Props) {
   const [logoError, setLogoError] = useState(false);
   const { lang, toggle } = useLang();
   const tr = t(lang);
@@ -48,16 +64,14 @@ export default function Sidebar({ isOpen, onClose, onNewChat, onPickQuestion }: 
               M
             </div>
           )}
-          <div>
+          <div className="sidebar-title-wrap">
             <div className="sidebar-title">{tr.botName}</div>
-            <div className="sidebar-subtitle">{tr.subtitle}</div>
           </div>
+          <button className="lang-flag-btn" onClick={toggle} aria-label="lang" title={lang === "fr" ? "العربية" : "Français"}>
+            {lang === "fr" ? "🇲🇷" : "🇫🇷"}
+          </button>
+          <ThemeToggle />
         </div>
-
-        {/* Lang toggle */}
-        <button className="lang-toggle-btn" onClick={toggle}>
-          {lang === "fr" ? "🇲🇷 العربية" : "🇫🇷 Français"}
-        </button>
 
         <button className="new-chat-btn" onClick={onNewChat}>
           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -66,24 +80,13 @@ export default function Sidebar({ isOpen, onClose, onNewChat, onPickQuestion }: 
           {tr.newChat}
         </button>
 
-        <div className="sidebar-section-label">{tr.suggestedQuestions}</div>
-
-        <div className="sidebar-suggestions">
-          {tr.suggestions.map((q) => (
-            <button
-              key={q}
-              className="sidebar-suggestion-btn"
-              onClick={() => { onPickQuestion(q); onClose(); }}
-            >
-              <span className="sidebar-suggestion-icon">
-                <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </span>
-              <span className="sidebar-suggestion-text">{q}</span>
-            </button>
-          ))}
-        </div>
+        <ConversationList
+          conversations={conversations}
+          activeId={activeConversationId}
+          onSelect={(id) => { onSelectConversation(id); onClose(); }}
+          onRename={onRenameConversation}
+          onDelete={onDeleteConversation}
+        />
 
         <div className="sidebar-footer">
           <div className="status-dot" />

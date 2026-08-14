@@ -7,10 +7,11 @@ interface Props {
   value: string;
   onChange: (v: string) => void;
   onSend: () => void;
+  onStop?: () => void;
   disabled: boolean;
 }
 
-export default function InputArea({ value, onChange, onSend, disabled }: Props) {
+export default function InputArea({ value, onChange, onSend, onStop, disabled }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { lang } = useLang();
   const tr = t(lang);
@@ -44,16 +45,29 @@ export default function InputArea({ value, onChange, onSend, disabled }: Props) 
             onKeyDown={handleKey}
           />
           <div className="input-toolbar">
-            <button
-              className="send-btn"
-              type="button"
-              disabled={!canSend}
-              onClick={onSend}
-            >
-              <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </button>
+            {disabled ? (
+              <button
+                className="send-btn stop-btn"
+                type="button"
+                onClick={onStop}
+                aria-label="Stop"
+              >
+                <svg fill="currentColor" viewBox="0 0 24 24">
+                  <rect x="6" y="6" width="12" height="12" rx="2" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                className="send-btn"
+                type="button"
+                disabled={!canSend}
+                onClick={onSend}
+              >
+                <svg fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
         <p className="input-hint">
