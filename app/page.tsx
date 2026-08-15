@@ -191,7 +191,7 @@ export default function ChatPage() {
           }
           if (!dataLine) continue;
 
-          let payload: { text?: string; warnings?: string[] };
+          let payload: { text?: string; warnings?: string[]; response_id?: string };
           try {
             payload = JSON.parse(dataLine);
           } catch {
@@ -205,6 +205,16 @@ export default function ChatPage() {
             fullText = payload.text;
             applyText(fullText);
           } else if (eventName === "done") {
+            if (payload.response_id) {
+              setMessages((prev) => {
+                const next = [...prev];
+                const lastIdx = next.length - 1;
+                if (next[lastIdx]?.type === "bot") {
+                  next[lastIdx] = { type: "bot", content: fullText, responseId: payload.response_id };
+                }
+                return next;
+              });
+            }
             break streamLoop;
           }
         }

@@ -9,7 +9,7 @@ import { t } from "../lib/i18n";
 
 export type Message =
   | { type: "user"; text: string }
-  | { type: "bot"; content: string }
+  | { type: "bot"; content: string; responseId?: string }
   | { type: "error"; text: string }
   | { type: "typing" };
 
@@ -53,17 +53,23 @@ const BotMessage = memo(function BotMessage({
   content,
   isLast,
   onRegenerate,
+  responseId,
 }: {
   content: string;
   isLast: boolean;
   onRegenerate: () => void;
+  responseId?: string;
 }) {
   return (
     <div className="message message-bot">
       <BotAvatar />
       <div className="bot-content-wrap">
         <div className="bot-content">{parseMarkdown(content)}</div>
-        <MessageActions content={content} onRegenerate={isLast ? onRegenerate : undefined} />
+        <MessageActions
+          content={content}
+          onRegenerate={isLast ? onRegenerate : undefined}
+          responseId={responseId}
+        />
       </div>
     </div>
   );
@@ -115,6 +121,7 @@ const Thread = forwardRef<ThreadHandle, Props>(function Thread(
                 content={msg.content}
                 isLast={i === lastBotIndex && !loading}
                 onRegenerate={onRegenerate}
+                responseId={msg.responseId}
               />
             );
           }

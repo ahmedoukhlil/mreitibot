@@ -801,6 +801,14 @@ html, body {
   color: var(--text-primary);
 }
 
+.message-action-btn:disabled {
+  cursor: default;
+}
+
+.message-action-btn-active {
+  color: var(--accent);
+}
+
 .bot-content p { margin: 0 0 12px; }
 .bot-content p:last-child { margin-bottom: 0; }
 
