@@ -2,7 +2,6 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useLang } from "../lib/LangContext";
-import { useLangSwitch } from "../lib/useLangSwitch";
 import { t } from "../lib/i18n";
 import ConversationList from "./ConversationList";
 import ThemeToggle from "./ThemeToggle";
@@ -31,8 +30,7 @@ export default function Sidebar({
   onDeleteConversation,
 }: Props) {
   const [logoError, setLogoError] = useState(false);
-  const { lang } = useLang();
-  const switchLang = useLangSwitch();
+  const { lang, toggle } = useLang();
   const tr = t(lang);
 
   return (
@@ -73,7 +71,7 @@ export default function Sidebar({
           <div className="lang-flag-switch">
             <button
               className={`lang-flag-option${lang === "fr" ? " active" : ""}`}
-              onClick={() => lang !== "fr" && switchLang("fr")}
+              onClick={() => lang !== "fr" && toggle()}
               aria-label="Français"
               title="Français"
             >
@@ -81,7 +79,7 @@ export default function Sidebar({
             </button>
             <button
               className={`lang-flag-option${lang === "ar" ? " active" : ""}`}
-              onClick={() => lang !== "ar" && switchLang("ar")}
+              onClick={() => lang !== "ar" && toggle()}
               aria-label="العربية"
               title="العربية"
             >

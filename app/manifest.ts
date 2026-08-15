@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "MREITI BOT — Assistant ITIE Mauritanie",
     short_name: "MREITI BOT",
     description: "Assistant documentaire MREITI / ITIE Mauritanie",
-    start_url: "/fr",
+    start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
     theme_color: "#0f172a",

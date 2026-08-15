@@ -1,5 +1,5 @@
-const CACHE_NAME = "mreitibot-shell-v3";
-const SHELL_ASSETS = ["/", "/fr", "/ar", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
+const CACHE_NAME = "mreitibot-shell-v2";
+const SHELL_ASSETS = ["/", "/manifest.webmanifest", "/icon-192.png", "/icon-512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

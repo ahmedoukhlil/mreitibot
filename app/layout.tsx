@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Poppins, Noto_Sans_Arabic } from "next/font/google";
 import "./globals.css";
+import { LangProvider } from "./lib/LangContext";
 import { ThemeProvider } from "./lib/ThemeContext";
 import ServiceWorkerRegister from "./components/ServiceWorkerRegister";
 
@@ -40,9 +41,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html className={`${poppins.variable} ${notoArabic.variable}`} suppressHydrationWarning>
+    <html lang="fr" className={`${poppins.variable} ${notoArabic.variable}`}>
       <body>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <LangProvider>{children}</LangProvider>
+        </ThemeProvider>
         <ServiceWorkerRegister />
       </body>
     </html>

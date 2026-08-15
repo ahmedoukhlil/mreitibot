@@ -1,5 +1,5 @@
 "use client";
-import { forwardRef, memo, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, memo, useImperativeHandle, useRef } from "react";
 import Image from "next/image";
 import Welcome from "./Welcome";
 import MessageActions from "./MessageActions";
@@ -24,31 +24,6 @@ interface Props {
   onRegenerate: () => void;
   onRetry: () => void;
   loading: boolean;
-}
-
-const THINKING_STAGE_MS = 2200;
-
-function TypingIndicator({ stages }: { stages: readonly string[] }) {
-  const [stageIdx, setStageIdx] = useState(0);
-
-  useEffect(() => {
-    setStageIdx(0);
-    if (stages.length <= 1) return;
-    const id = setInterval(() => {
-      setStageIdx((i) => Math.min(i + 1, stages.length - 1));
-    }, THINKING_STAGE_MS);
-    return () => clearInterval(id);
-  }, [stages]);
-
-  return (
-    <div className="typing-wrapper">
-      <BotAvatar />
-      <div className="typing-text">
-        {stages[stageIdx] ?? stages[0]}
-        <span className="typing-ellipsis" />
-      </div>
-    </div>
-  );
 }
 
 function BotAvatar() {
@@ -171,7 +146,15 @@ const Thread = forwardRef<ThreadHandle, Props>(function Thread(
               </div>
             );
           }
-          return <TypingIndicator key={i} stages={tr.thinkingStages ?? [tr.thinking]} />;
+          return (
+            <div key={i} className="typing-wrapper">
+              <BotAvatar />
+              <div className="typing-text">
+                {tr.thinking}
+                <span className="typing-ellipsis" />
+              </div>
+            </div>
+          );
         })}
       </div>
     </div>
