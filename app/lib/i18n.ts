@@ -17,11 +17,17 @@ export const translations = {
     conversations: "Conversations",
     online: "En ligne",
     placeholder: "Posez votre question sur l'ITIE…",
-    hint: "pour envoyer",
-    hintNewLine: "pour nouvelle ligne",
+    aiDisclaimer:
+      "Assistant IA — l'exactitude des réponses dépend de la qualité de la question. MREITI BOT peut se tromper, vérifiez les informations importantes.",
     error: "Impossible de joindre le serveur. Vérifiez votre connexion.",
     retry: "Réessayer",
     thinking: "MREITI BOT est en train de réfléchir",
+    thinkingStages: [
+      "MREITI BOT est en train de réfléchir",
+      "Recherche dans les rapports ITIE…",
+      "Analyse des extraits pertinents…",
+      "Rédaction de la réponse…",
+    ],
     botName: "MREITI BOT",
     subtitle: "MREITI · ITIE Mauritanie",
     installApp: "Installer l'application",
@@ -46,11 +52,17 @@ export const translations = {
     conversations: "المحادثات",
     online: "متصل",
     placeholder: "اطرح سؤالك حول ITIE…",
-    hint: "للإرسال",
-    hintNewLine: "لسطر جديد",
+    aiDisclaimer:
+      "مساعد ذكاء اصطناعي — تعتمد دقة الإجابات على جودة السؤال. قد يخطئ MREITI BOT، يرجى التحقق من المعلومات المهمة.",
     error: "تعذّر الاتصال بالخادم. تحقق من اتصالك.",
     retry: "إعادة المحاولة",
     thinking: "MREITI BOT يفكّر…",
+    thinkingStages: [
+      "MREITI BOT يفكّر…",
+      "البحث في تقارير ITIE…",
+      "تحليل المقتطفات ذات الصلة…",
+      "صياغة الرد…",
+    ],
     botName: "MREITI BOT",
     subtitle: "MREITI · ITIE موريتانيا",
     installApp: "تثبيت التطبيق",
@@ -63,4 +75,14 @@ export const translations = {
 
 export function t(lang: Lang) {
   return translations[lang];
+}
+
+/** Remplace le premier segment ("/fr" ou "/ar") d'un chemin par la langue cible. */
+export function swapLangInPath(pathname: string, target: Lang): string {
+  const segments = pathname.split("/");
+  if (segments[1] === "fr" || segments[1] === "ar") {
+    segments[1] = target;
+    return segments.join("/") || `/${target}`;
+  }
+  return `/${target}`;
 }

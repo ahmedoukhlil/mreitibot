@@ -70,9 +70,7 @@ export default function InputArea({ value, onChange, onSend, onStop, disabled }:
             )}
           </div>
         </div>
-        <p className="input-hint">
-          <kbd>Enter</kbd> {tr.hint} · <kbd>Shift+Enter</kbd> {tr.hintNewLine}
-        </p>
+        <p className="ai-disclaimer">{tr.aiDisclaimer}</p>
       </div>
     </div>
   );
