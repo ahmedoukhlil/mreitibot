@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Script from "next/script";
 import { LangProvider } from "../lib/LangContext";
 import type { Lang } from "../lib/i18n";
 
@@ -20,11 +19,13 @@ export default async function LangLayout({
 
   return (
     <>
-      {/* S'exécute avant le paint (beforeInteractive, sans requête externe) pour corriger
+      {/* S'exécute avant le paint (script inline bloquant, sans requête externe) pour corriger
           les attributs du <html> racine, qu'un layout imbriqué ne peut pas rendre lui-même. */}
-      <Script id="lang-attrs" strategy="beforeInteractive">
-        {`document.documentElement.lang=${JSON.stringify(lang)};document.documentElement.dir=${JSON.stringify(dir)};try{localStorage.setItem("chafafiya:lang",${JSON.stringify(lang)});}catch(e){}`}
-      </Script>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `document.documentElement.lang=${JSON.stringify(lang)};document.documentElement.dir=${JSON.stringify(dir)};try{localStorage.setItem("chafafiya:lang",${JSON.stringify(lang)});}catch(e){}`,
+        }}
+      />
       <LangProvider lang={lang as Lang}>{children}</LangProvider>
     </>
   );

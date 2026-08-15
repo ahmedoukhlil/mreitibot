@@ -52,14 +52,7 @@ export function useChat({ lang, conversationId, onConversationCreated, onConvers
   const [showWelcome, setShowWelcome] = useState(true);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  // Toujours vide au premier rendu (serveur ET client) pour éviter un mismatch d'hydration :
-  // listConversations() lit localStorage, indisponible côté serveur — la vraie liste n'est
-  // chargée qu'après montage, une fois que le DOM client existe des deux côtés.
-  const [conversations, setConversations] = useState<StoredConversation[]>([]);
-
-  useEffect(() => {
-    setConversations(listConversations());
-  }, []);
+  const [conversations, setConversations] = useState<StoredConversation[]>(listConversations);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const historyRef = useRef<HistoryEntry[]>([]);
   const threadRef = useRef<ThreadHandle>(null);
