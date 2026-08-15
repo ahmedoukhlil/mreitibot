@@ -137,8 +137,14 @@ function finalizeResponse(rawText: string, contexte: string): { text: string; wa
   return { text: response, warnings: [] };
 }
 
-const N8N_TIMEOUT_MS = 40000;
-const N8N_RETRY_TIMEOUT_MS = 15000;
+// Le webhook n8n répond normalement en 2-5s (retrieval Qdrant/Ollama), donc
+// ces timeouts n'ont pas besoin d'être longs — les garder courts laisse une
+// vraie marge à l'appel OpenAI qui suit sous maxDuration=60 (Vercel). Avec
+// 40s+15s=55s précédemment, il ne restait presque rien pour OpenAI dès que
+// le premier essai traînait un peu, provoquant un FUNCTION_INVOCATION_TIMEOUT
+// Vercel (mort silencieuse, sans même passer par notre gestion d'erreur).
+const N8N_TIMEOUT_MS = 15000;
+const N8N_RETRY_TIMEOUT_MS = 8000;
 
 async function fetchN8n(body: string, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
