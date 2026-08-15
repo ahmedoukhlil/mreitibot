@@ -92,16 +92,30 @@ function finalizeResponse(rawText: string, contexte: string): { text: string; wa
   return { text: response, warnings: [] };
 }
 
+const N8N_TIMEOUT_MS = 25000;
+
+async function fetchN8n(body: string): Promise<Response> {
+  return fetch(N8N_WEBHOOK, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    signal: AbortSignal.timeout(N8N_TIMEOUT_MS),
+  });
+}
+
 export async function POST(req: NextRequest) {
   const body = await req.text();
 
   let ragContext: RagContext;
   try {
-    const upstream = await fetch(N8N_WEBHOOK, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-    });
+    let upstream: Response;
+    try {
+      upstream = await fetchN8n(body);
+    } catch {
+      // Une latence réseau isolée (egress Vercel <-> VPS) peut faire échouer un premier
+      // essai alors que le VPS lui-même répond normalement : on retente une fois.
+      upstream = await fetchN8n(body);
+    }
     if (!upstream.ok) {
       return new Response(
         JSON.stringify({ error: `Recherche RAG indisponible (HTTP ${upstream.status}).` }),
