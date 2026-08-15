@@ -59,12 +59,16 @@ function responseQualityWarnings(response: string, contexte: string): string[] {
   const maxRef = maxCitationFromContext(contexte);
   const citeRe = /\[(\d+)\]/g;
   let m: RegExpExecArray | null;
+  let invalidCitations = 0;
   while ((m = citeRe.exec(response)) !== null) {
     const n = parseInt(m[1], 10);
-    if (maxRef > 0 && n > maxRef) {
-      warnings.push("citation_hors_contexte");
-      break;
-    }
+    if (maxRef > 0 && n > maxRef) invalidCitations++;
+  }
+  // Une seule citation légèrement hors-plage (ex. décalage d'un cran sur un long
+  // contexte multi-chunks) ne justifie pas de jeter toute la réponse : on ne
+  // signale une vraie hallucination systématique qu'à partir de 2 occurrences.
+  if (invalidCitations >= 2) {
+    warnings.push("citation_hors_contexte");
   }
   const low = response.toLowerCase();
   if (/source:\s*blob/.test(low) || /fichier:\s*blob/.test(low)) {
@@ -92,11 +96,12 @@ function finalizeResponse(rawText: string, contexte: string): { text: string; wa
   return { text: response, warnings: [] };
 }
 
-const N8N_TIMEOUT_MS = 25000;
+const N8N_TIMEOUT_MS = 40000;
+const N8N_RETRY_TIMEOUT_MS = 15000;
 
-async function fetchN8n(body: string): Promise<Response> {
+async function fetchN8n(body: string, timeoutMs: number): Promise<Response> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), N8N_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(N8N_WEBHOOK, {
       method: "POST",
@@ -116,11 +121,12 @@ export async function POST(req: NextRequest) {
   try {
     let upstream: Response;
     try {
-      upstream = await fetchN8n(body);
+      upstream = await fetchN8n(body, N8N_TIMEOUT_MS);
     } catch {
       // Une latence réseau isolée (egress Vercel <-> VPS) peut faire échouer un premier
-      // essai alors que le VPS lui-même répond normalement : on retente une fois.
-      upstream = await fetchN8n(body);
+      // essai alors que le VPS lui-même répond normalement : on retente une fois, avec un
+      // budget plus court pour rester sous maxDuration=60s au total (40s + 15s + marge).
+      upstream = await fetchN8n(body, N8N_RETRY_TIMEOUT_MS);
     }
     if (!upstream.ok) {
       return new Response(
@@ -155,7 +161,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         model: OPENAI_MODEL,
         stream: true,
-        temperature: 0.2,
+        temperature: 0,
         messages: [{ role: "user", content: ragContext.prompt }],
       }),
     });
