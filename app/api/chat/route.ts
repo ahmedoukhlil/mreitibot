@@ -54,6 +54,22 @@ function stripRagMetaParagraphs(text: string): string {
   return kept.join("\n\n").trim();
 }
 
+/**
+ * Extrait les nombres "significatifs" d'un texte (au moins 3 chiffres, ou
+ * décimales) — ignore les petits nombres isolés (numéros de citation [3],
+ * années seules "2023") pour ne pas polluer la comparaison avec du bruit.
+ */
+function extractSignificantNumbers(text: string): Set<string> {
+  const re = /\b\d{1,3}(?:[ .,]\d{3})+(?:[.,]\d+)?\b|\b\d+[.,]\d+\b/g;
+  const out = new Set<string>();
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const normalized = m[0].replace(/[ .,]/g, "");
+    if (normalized.length >= 3) out.add(normalized);
+  }
+  return out;
+}
+
 function responseQualityWarnings(response: string, contexte: string): string[] {
   const warnings: string[] = [];
   const maxRef = maxCitationFromContext(contexte);
@@ -74,6 +90,24 @@ function responseQualityWarnings(response: string, contexte: string): string[] {
   if (/source:\s*blob/.test(low) || /fichier:\s*blob/.test(low)) {
     warnings.push("source_invalide");
   }
+
+  // Garde-fou léger : signale (sans rejeter la réponse) si des montants/chiffres
+  // significatifs cités n'apparaissent nulle part dans le contexte documentaire
+  // fourni — utile pour repérer les hallucinations de chiffres en monitoring
+  // (request_logs) sans risquer de faux positifs sur des chiffres reformatés
+  // légitimement (espaces/virgules différents), d'où la normalisation commune.
+  const responseNumbers = extractSignificantNumbers(response);
+  if (responseNumbers.size > 0) {
+    const contextNumbers = extractSignificantNumbers(contexte);
+    let unverified = 0;
+    for (const n of responseNumbers) {
+      if (!contextNumbers.has(n)) unverified++;
+    }
+    if (unverified > 0) {
+      warnings.push("chiffres_non_verifies");
+    }
+  }
+
   return warnings;
 }
 
@@ -88,8 +122,15 @@ function finalizeResponse(rawText: string, contexte: string): { text: string; wa
   if (stripped.length >= 24) response = stripped;
 
   const warnings = responseQualityWarnings(response, contexte);
+  // "chiffres_non_verifies" reste un signal de monitoring (loggé, visible côté
+  // client) : le rejet total avec le message générique n'est déclenché que par
+  // des signaux forts (citation hors contexte répétée, source invalide), pour
+  // éviter les faux positifs sur des chiffres légitimement calculés/reformatés
+  // (sommes de lignes, pourcentages) que ce garde-fou ne peut pas distinguer
+  // d'une vraie hallucination.
+  const hasStrongWarning = warnings.some((w) => w !== "chiffres_non_verifies");
 
-  if (warnings.length > 0 && contexte.length >= 20) {
+  if (hasStrongWarning && contexte.length >= 20) {
     return { text: FALLBACK_TEXT, warnings };
   }
 
