@@ -12,19 +12,27 @@ interface LangCtx {
 const LangContext = createContext<LangCtx>({ lang: "fr", toggle: () => {} });
 
 function readStoredLang(): Lang {
-  if (typeof window === "undefined") return "fr";
   const stored = window.localStorage.getItem(LANG_STORAGE_KEY);
   return stored === "ar" || stored === "fr" ? stored : "fr";
 }
 
 export function LangProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>(readStoredLang);
+  // Toujours "fr" au premier rendu (serveur ET client) pour éviter un mismatch
+  // d'hydration : la vraie langue stockée n'est appliquée qu'après montage.
+  const [lang, setLang] = useState<Lang>("fr");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setLang(readStoredLang());
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
     window.localStorage.setItem(LANG_STORAGE_KEY, lang);
-  }, [lang]);
+  }, [lang, mounted]);
 
   const toggle = () => setLang((l) => (l === "fr" ? "ar" : "fr"));
 

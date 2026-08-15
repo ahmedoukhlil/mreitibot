@@ -13,15 +13,24 @@ interface ThemeCtx {
 const ThemeContext = createContext<ThemeCtx>({ theme: "system", setTheme: () => {} });
 
 function readStoredTheme(): Theme {
-  if (typeof window === "undefined") return "system";
   const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
   return stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(readStoredTheme);
+  // Toujours "system" au premier rendu (serveur ET client) pour éviter un
+  // mismatch d'hydration : la vraie valeur stockée n'est appliquée qu'après
+  // montage, une fois que le DOM client existe des deux côtés.
+  const [theme, setThemeState] = useState<Theme>("system");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setThemeState(readStoredTheme());
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
     const root = document.documentElement;
     if (theme === "system") {
       root.removeAttribute("data-theme");
@@ -29,7 +38,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       root.setAttribute("data-theme", theme);
     }
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
-  }, [theme]);
+  }, [theme, mounted]);
 
   const setTheme = (t: Theme) => setThemeState(t);
 
