@@ -42,6 +42,8 @@ html, body { overflow: hidden; max-width: 100%; }
   --shadow-md: 0 4px 12px rgba(13,31,60,0.08), 0 2px 4px rgba(13,31,60,0.05);
   --shadow-input: 0 2px 8px rgba(13,31,60,0.07), 0 0 0 1px var(--input-border);
   --shadow-input-focus: 0 2px 12px rgba(33,144,196,0.15), 0 0 0 2px #2190c4;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-decel: cubic-bezier(0.05, 0.7, 0.1, 1);
 }
 
 :root[data-theme="dark"] {
@@ -696,11 +698,11 @@ html, body {
 /* ── Messages ── */
 .message {
   margin-bottom: 24px;
-  animation: fadeIn 0.25s ease-out;
+  animation: fadeIn 0.32s var(--ease-decel);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -1182,9 +1184,12 @@ html, body {
   display: none;
   align-items: center;
   gap: 10px;
-  padding: calc(12px + env(safe-area-inset-top)) 16px 12px;
+  padding: calc(12px + env(safe-area-inset-top)) 14px 12px;
   border-bottom: 1px solid var(--border);
   background: var(--chat-bg);
+  background: color-mix(in srgb, var(--chat-bg) 92%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   flex-shrink: 0;
   position: sticky;
   top: 0;
@@ -1192,25 +1197,35 @@ html, body {
 }
 
 .mobile-menu-btn {
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   background: transparent;
   border: none;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-secondary);
-  transition: background 0.15s;
+  transition: background 0.15s var(--ease-standard), transform 0.15s var(--ease-standard);
 }
 
 .mobile-menu-btn:hover { background: var(--suggestion-hover); }
+.mobile-menu-btn:active { background: var(--suggestion-hover); transform: scale(0.92); }
 
 .mobile-header-title {
   font-size: 15px;
   font-weight: 500;
   color: var(--text-primary);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-header .lang-toggle-mobile {
+  flex-shrink: 0;
 }
 
 .sidebar-overlay {
@@ -1219,6 +1234,12 @@ html, body {
   inset: 0;
   background: rgba(0,0,0,0.4);
   z-index: 40;
+  opacity: 0;
+  transition: opacity 0.25s var(--ease-standard);
+}
+
+.sidebar-overlay.open {
+  opacity: 1;
 }
 
 /* ── Responsive ── */
@@ -1235,10 +1256,11 @@ html, body {
     bottom: 0;
     z-index: 50;
     transform: translateX(-100%);
-    transition: transform 0.25s ease;
+    transition: transform 0.32s var(--ease-decel);
     width: 268px;
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.15);
   }
 
   .input-box textarea { font-size: 16px; }
@@ -1256,18 +1278,60 @@ html, body {
   .mobile-header { display: flex; }
 
   .thread-inner {
-    padding: 16px 12px 16px;
+    padding: 16px 12px calc(140px + env(safe-area-inset-bottom));
     max-width: 100%;
     overflow-x: hidden;
   }
 
   .input-area {
-    padding: 10px 12px calc(14px + env(safe-area-inset-bottom));
+    padding: 8px 10px calc(12px + env(safe-area-inset-bottom));
+    border-top: none;
   }
 
   .input-area-inner { max-width: 100%; }
 
-  .user-bubble { max-width: 86%; word-break: break-word; }
+  .input-box {
+    border-radius: 26px;
+    box-shadow: 0 2px 10px rgba(13,31,60,0.1), 0 0 0 1px var(--input-border);
+  }
+
+  .input-box:focus-within {
+    box-shadow: 0 2px 14px rgba(33,144,196,0.18), 0 0 0 1.5px var(--input-focus);
+  }
+
+  .input-box textarea {
+    padding: 13px 14px 0;
+    min-height: 48px;
+  }
+
+  .input-toolbar {
+    padding: 6px 10px 10px;
+  }
+
+  .send-btn,
+  .stop-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+  }
+
+  .send-btn:not(:disabled):active,
+  .stop-btn:active {
+    transform: scale(0.9);
+  }
+
+  .input-hint { display: none; }
+
+  .user-bubble {
+    max-width: 86%;
+    word-break: break-word;
+    padding: 11px 16px;
+    border-radius: 20px 20px 4px 20px;
+  }
+
+  [dir="rtl"] .user-bubble {
+    border-radius: 20px 20px 20px 4px;
+  }
 
   .bot-content {
     max-width: 100%;
@@ -1279,7 +1343,17 @@ html, body {
   .bot-content ul,
   .bot-content .sub-list { padding-left: 18px; }
 
-  .message { max-width: 100%; }
+  .message { max-width: 100%; margin-bottom: 20px; }
+
+  .message-action-btn {
+    padding: 8px;
+  }
+
+  .message-bot .message-actions {
+    opacity: 1;
+    margin-top: 4px;
+  }
+
   .welcome-suggestions { grid-template-columns: 1fr; }
   .welcome h1 { font-size: 22px; }
   .welcome { padding: 16px 4px; }
