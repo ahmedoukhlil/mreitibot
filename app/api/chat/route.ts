@@ -95,12 +95,18 @@ function finalizeResponse(rawText: string, contexte: string): { text: string; wa
 const N8N_TIMEOUT_MS = 25000;
 
 async function fetchN8n(body: string): Promise<Response> {
-  return fetch(N8N_WEBHOOK, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body,
-    signal: AbortSignal.timeout(N8N_TIMEOUT_MS),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), N8N_TIMEOUT_MS);
+  try {
+    return await fetch(N8N_WEBHOOK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function POST(req: NextRequest) {
