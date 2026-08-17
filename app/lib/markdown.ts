@@ -14,6 +14,8 @@ function inlineHtml(t: string) {
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replace(/`(.+?)`/g, "<code>$1</code>")
+    .replace(/\bNon disponible\b/g, '<span class="table-na">Non disponible</span>')
+    .replace(/\[(\d+)\](?!\()/g, '<a class="source-ref" href="#source-$1">[$1]</a>')
     .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 }
 

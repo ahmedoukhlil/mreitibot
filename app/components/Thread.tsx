@@ -3,14 +3,23 @@ import { forwardRef, memo, useImperativeHandle, useRef } from "react";
 import Image from "next/image";
 import Welcome from "./Welcome";
 import MessageActions from "./MessageActions";
+import StatusBadge from "./StatusBadge";
+import FollowupChips from "./FollowupChips";
 import { parseMarkdown } from "../lib/markdown";
 import { useLang } from "../lib/LangContext";
 import { t } from "../lib/i18n";
 
 export type Message =
-  | { type: "user"; text: string }
-  | { type: "bot"; content: string; responseId?: string }
-  | { type: "error"; text: string }
+  | { type: "user"; text: string; ts?: number }
+  | {
+      type: "bot";
+      content: string;
+      responseId?: string;
+      ts?: number;
+      reportStatus?: "final" | "provisional";
+      followups?: string[];
+    }
+  | { type: "error"; text: string; ts?: number }
   | { type: "typing" };
 
 export interface ThreadHandle {
@@ -54,17 +63,25 @@ const BotMessage = memo(function BotMessage({
   isLast,
   onRegenerate,
   responseId,
+  reportStatus,
+  followups,
+  onPick,
 }: {
   content: string;
   isLast: boolean;
   onRegenerate: () => void;
   responseId?: string;
+  reportStatus?: "final" | "provisional";
+  followups?: string[];
+  onPick: (q: string) => void;
 }) {
   return (
     <div className="message message-bot">
       <BotAvatar />
       <div className="bot-content-wrap">
+        <StatusBadge status={reportStatus} />
         <div className="bot-content">{parseMarkdown(content)}</div>
+        <FollowupChips suggestions={followups ?? []} onPick={onPick} />
         <MessageActions
           content={content}
           onRegenerate={isLast ? onRegenerate : undefined}
@@ -101,47 +118,89 @@ const Thread = forwardRef<ThreadHandle, Props>(function Thread(
     return -1;
   })();
 
+  /**
+   * Étiquette de séparateur à afficher juste avant chaque message : calculée
+   * une seule fois en un passage linéaire (pas de re-render coûteux par
+   * chunk de streaming), à partir de la première transition de jour civil
+   * rencontrée. undefined = pas de nouveau séparateur à ce point.
+   */
+  const dateSeparators = (() => {
+    const labels: (string | undefined)[] = new Array(messages.length).fill(undefined);
+    let lastDay: string | null = null;
+    for (let i = 0; i < messages.length; i++) {
+      const msg = messages[i];
+      const ts = msg.type !== "typing" ? msg.ts : undefined;
+      if (ts == null) continue;
+      const day = new Date(ts).toDateString();
+      if (day !== lastDay) {
+        labels[i] = new Date(ts).toLocaleDateString(lang === "ar" ? "ar" : "fr-FR", {
+          day: "numeric",
+          month: "long",
+        });
+        lastDay = day;
+      }
+    }
+    return labels;
+  })();
+
   return (
     <div className="thread" ref={threadRef}>
       <div className="thread-inner">
         {showWelcome && <Welcome onPick={onPick} />}
 
         {messages.map((msg, i) => {
+          const separator = dateSeparators[i] ? (
+            <div key={`sep-${i}`} className="thread-date-separator">
+              <span>{dateSeparators[i]}</span>
+            </div>
+          ) : null;
+
           if (msg.type === "user") {
             return (
-              <div key={i} className="message message-user">
-                <div className="user-bubble">{msg.text}</div>
+              <div key={i}>
+                {separator}
+                <div className="message message-user">
+                  <div className="user-bubble">{msg.text}</div>
+                </div>
               </div>
             );
           }
           if (msg.type === "bot") {
             return (
-              <BotMessage
-                key={i}
-                content={msg.content}
-                isLast={i === lastBotIndex && !loading}
-                onRegenerate={onRegenerate}
-                responseId={msg.responseId}
-              />
+              <div key={i}>
+                {separator}
+                <BotMessage
+                  content={msg.content}
+                  isLast={i === lastBotIndex && !loading}
+                  onRegenerate={onRegenerate}
+                  responseId={msg.responseId}
+                  reportStatus={msg.reportStatus}
+                  followups={msg.followups}
+                  onPick={onPick}
+                />
+              </div>
             );
           }
           if (msg.type === "error") {
             return (
-              <div key={i} className="message message-error">
-                <div className="bot-avatar" style={{ background: "var(--error-text)" }}>
-                  <span className="bot-avatar-letter">!</span>
-                </div>
-                <div className="error-content-wrap">
-                  <div className="error-content">{msg.text}</div>
-                  {!loading && (
-                    <button className="retry-btn" onClick={onRetry}>
-                      <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M23 4v6h-6M1 20v-6h6" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
-                      </svg>
-                      {tr.retry}
-                    </button>
-                  )}
+              <div key={i}>
+                {separator}
+                <div className="message message-error">
+                  <div className="bot-avatar" style={{ background: "var(--error-text)" }}>
+                    <span className="bot-avatar-letter">!</span>
+                  </div>
+                  <div className="error-content-wrap">
+                    <div className="error-content">{msg.text}</div>
+                    {!loading && (
+                      <button className="retry-btn" onClick={onRetry}>
+                        <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M23 4v6h-6M1 20v-6h6" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+                        </svg>
+                        {tr.retry}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -149,9 +208,11 @@ const Thread = forwardRef<ThreadHandle, Props>(function Thread(
           return (
             <div key={i} className="typing-wrapper">
               <BotAvatar />
-              <div className="typing-text">
-                {tr.thinking}
-                <span className="typing-ellipsis" />
+              <div className="typing-text">{tr.thinking}</div>
+              <div className="typing-dots" role="status" aria-label={tr.thinking}>
+                <span className="typing-dot" />
+                <span className="typing-dot" />
+                <span className="typing-dot" />
               </div>
             </div>
           );

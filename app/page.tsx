@@ -31,9 +31,9 @@ function trunc(s: string, max: number) {
 
 function toDisplayMessages(stored: StoredMessage[]): Message[] {
   return stored.map((m) => {
-    if (m.role === "user") return { type: "user", text: m.content };
-    if (m.role === "error") return { type: "error", text: m.content };
-    return { type: "bot", content: m.content };
+    if (m.role === "user") return { type: "user", text: m.content, ts: m.ts };
+    if (m.role === "error") return { type: "error", text: m.content, ts: m.ts };
+    return { type: "bot", content: m.content, ts: m.ts };
   });
 }
 
@@ -112,7 +112,7 @@ export default function ChatPage() {
       }
     } else {
       setShowWelcome(false);
-      setMessages((prev) => [...prev, { type: "user", text: msg }, { type: "typing" }]);
+      setMessages((prev) => [...prev, { type: "user", text: msg, ts: Date.now() }, { type: "typing" }]);
       conv.messages.push(newMessage("user", msg));
     }
 
@@ -156,7 +156,7 @@ export default function ChatPage() {
 
       setMessages((prev) => [
         ...prev.filter((m) => m.type !== "typing"),
-        { type: "bot", content: "" },
+        { type: "bot", content: "", ts: Date.now() },
       ]);
 
       const reader = res.body.getReader();
@@ -168,7 +168,8 @@ export default function ChatPage() {
         setMessages((prev) => {
           const next = [...prev];
           const lastIdx = next.length - 1;
-          if (next[lastIdx]?.type === "bot") next[lastIdx] = { type: "bot", content: text };
+          const last = next[lastIdx];
+          if (last?.type === "bot") next[lastIdx] = { ...last, content: text };
           return next;
         });
       };
@@ -209,8 +210,9 @@ export default function ChatPage() {
               setMessages((prev) => {
                 const next = [...prev];
                 const lastIdx = next.length - 1;
-                if (next[lastIdx]?.type === "bot") {
-                  next[lastIdx] = { type: "bot", content: fullText, responseId: payload.response_id };
+                const last = next[lastIdx];
+                if (last?.type === "bot") {
+                  next[lastIdx] = { ...last, content: fullText, responseId: payload.response_id };
                 }
                 return next;
               });
@@ -308,6 +310,43 @@ export default function ChatPage() {
     setConversations(listConversations());
   }, []);
 
+  const [shareCopied, setShareCopied] = useState(false);
+
+  const activeConversation = conversations.find((c) => c.id === activeConversationId) ?? null;
+
+  const handleShare = useCallback(async () => {
+    const conv = activeConvRef.current;
+    if (!conv || !conv.messages.length) return;
+    const lastFew = conv.messages.slice(-2);
+    const summary = [
+      conv.title || tr.newChat,
+      "",
+      ...lastFew.map((m) => `${m.role === "user" ? "Q" : "R"}: ${m.content}`),
+    ].join("\n");
+    try {
+      await navigator.clipboard.writeText(summary);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 1500);
+    } catch {
+      // Presse-papier indisponible (permissions/contexte non sécurisé) : échec silencieux, pas de blocage UI.
+    }
+  }, [tr.newChat]);
+
+  const handleExport = useCallback(() => {
+    const conv = activeConvRef.current;
+    if (!conv || !conv.messages.length) return;
+    const lines = conv.messages.map(
+      (m) => `[${m.role === "user" ? "Vous" : m.role === "error" ? "Erreur" : tr.botName}]\n${m.content}\n`,
+    );
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(conv.title || "conversation").replace(/[^\w\-]+/g, "_")}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [tr.botName]);
+
   const handleDeleteConversation = useCallback((id: string) => {
     deleteConversation(id);
     setConversations(listConversations());
@@ -346,6 +385,32 @@ export default function ChatPage() {
             {lang === "fr" ? "ع" : "FR"}
           </button>
         </div>
+
+        {!showWelcome && activeConversation && (
+          <div className="chat-topbar">
+            <div className="chat-topbar-titles">
+              <div className="chat-topbar-title">{activeConversation.title || tr.newChat}</div>
+              <div className="chat-topbar-subtitle">{tr.subtitle}</div>
+            </div>
+            <div className="chat-topbar-actions">
+              <button className="chat-topbar-btn" onClick={handleShare} title={tr.share}>
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <path strokeLinecap="round" d="M8.6 13.5l6.8 3.9M15.4 6.6L8.6 10.5" />
+                </svg>
+                {shareCopied ? tr.shareCopied : tr.share}
+              </button>
+              <button className="chat-topbar-btn" onClick={handleExport} title={tr.exportTooltip}>
+                <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                </svg>
+                {tr.export}
+              </button>
+            </div>
+          </div>
+        )}
 
         <Thread
           ref={threadRef}

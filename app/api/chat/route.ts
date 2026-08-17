@@ -58,16 +58,67 @@ function stripRagMetaParagraphs(text: string): string {
  * Extrait les nombres "significatifs" d'un texte (au moins 3 chiffres, ou
  * décimales) — ignore les petits nombres isolés (numéros de citation [3],
  * années seules "2023") pour ne pas polluer la comparaison avec du bruit.
+ * Retourne à la fois la chaîne normalisée (comparaison verbatim, tolérante au
+ * formatage espaces/virgules) et la valeur numérique réelle (comparaison par
+ * échelle, tolérante à un arrondi légitime en milliers/millions/milliards —
+ * ex. "0,72 milliards MRU" pour un exact "720 311 759" du contexte, qui ne
+ * partagent aucune sous-chaîne mais représentent le même montant).
  */
-function extractSignificantNumbers(text: string): Set<string> {
+interface ExtractedNumber {
+  raw: string;
+  normalized: string;
+  value: number;
+}
+
+function extractSignificantNumbers(text: string): ExtractedNumber[] {
   const re = /\b\d{1,3}(?:[ .,]\d{3})+(?:[.,]\d+)?\b|\b\d+[.,]\d+\b/g;
-  const out = new Set<string>();
+  const out: ExtractedNumber[] = [];
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
-    const normalized = m[0].replace(/[ .,]/g, "");
-    if (normalized.length >= 3) out.add(normalized);
+    const raw = m[0];
+    const normalized = raw.replace(/[ .,]/g, "");
+    if (normalized.length < 3) continue;
+    // Valeur numérique réelle : le SÉPARATEUR devant le dernier groupe détermine
+    // s'il s'agit d'une décimale ou d'un simple séparateur de milliers — pas sa
+    // longueur (un groupe de milliers "075" et une décimale "423" font tous les
+    // deux 3 chiffres, donc la longueur seule ne peut pas trancher). Convention
+    // des rapports ITIE : virgule = décimale, espace = milliers.
+    const lastSepMatch = raw.match(/([ .,])(\d+)$/);
+    const value = lastSepMatch
+      ? lastSepMatch[1] === ","
+        ? parseFloat(raw.slice(0, lastSepMatch.index).replace(/[ .,]/g, "") + "." + lastSepMatch[2])
+        : parseFloat(raw.replace(/[ .,]/g, ""))
+      : parseFloat(raw.replace(/[ .,]/g, ""));
+    if (Number.isFinite(value)) out.push({ raw, normalized, value });
   }
   return out;
+}
+
+const SCALE_FACTORS = [1, 1000, 1_000_000, 1_000_000_000];
+const SCALE_TOLERANCE = 0.01; // 1% — tolère un arrondi d'affichage, pas un chiffre différent.
+
+/**
+ * Un nombre de la réponse est "vérifié" s'il matche verbatim OU à une échelle
+ * usuelle (k/M/Md) près un nombre du contexte — dans les DEUX sens, car soit
+ * la réponse peut arrondir un montant exact du contexte (ex. réponse "0,72
+ * milliards" pour un contexte exact "720 311 759"), soit l'inverse (réponse
+ * exacte pour un contexte qui n'affiche que la valeur arrondie en milliards).
+ */
+function numberIsVerified(candidate: ExtractedNumber, contextNumbers: ExtractedNumber[]): boolean {
+  for (const ctx of contextNumbers) {
+    if (candidate.normalized === ctx.normalized) return true;
+    for (const scale of SCALE_FACTORS) {
+      if (ctx.value !== 0) {
+        const scaledUp = candidate.value * scale;
+        if (Math.abs(scaledUp - ctx.value) / ctx.value <= SCALE_TOLERANCE) return true;
+      }
+      if (candidate.value !== 0) {
+        const scaledDown = ctx.value * scale;
+        if (Math.abs(scaledDown - candidate.value) / candidate.value <= SCALE_TOLERANCE) return true;
+      }
+    }
+  }
+  return false;
 }
 
 function responseQualityWarnings(response: string, contexte: string): string[] {
@@ -95,15 +146,14 @@ function responseQualityWarnings(response: string, contexte: string): string[] {
   // significatifs cités n'apparaissent nulle part dans le contexte documentaire
   // fourni — utile pour repérer les hallucinations de chiffres en monitoring
   // (request_logs) sans risquer de faux positifs sur des chiffres reformatés
-  // légitimement (espaces/virgules différents), d'où la normalisation commune.
+  // légitimement (espaces/virgules différentes, ou arrondis en milliers/
+  // millions/milliards — cf. numberIsVerified) ni détectés comme une vraie
+  // hallucination du nombre lui-même.
   const responseNumbers = extractSignificantNumbers(response);
-  if (responseNumbers.size > 0) {
+  if (responseNumbers.length > 0) {
     const contextNumbers = extractSignificantNumbers(contexte);
-    let unverified = 0;
-    for (const n of responseNumbers) {
-      if (!contextNumbers.has(n)) unverified++;
-    }
-    if (unverified > 0) {
+    const unverified = responseNumbers.filter((n) => !numberIsVerified(n, contextNumbers));
+    if (unverified.length > 0) {
       warnings.push("chiffres_non_verifies");
     }
   }
