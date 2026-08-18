@@ -15,7 +15,8 @@
     "alias_d'annees_a_connaitre": "Le rapport 2020 et le rapport 2021 sont fusionnés dans un seul document indexé sous metadata.year = '2020-2021'. Toute question sur '2020' ou '2021' isolément doit être résolue via cet alias. Le rapport 2025 doit être indexé avec un tag de statut ('version_provisoire' ou équivalent) distinct de 2024, pour permettre au prompt de le signaler.",
     "entites_de_reference_connues": "SNIM (fer, Zouerate), Kinross/Tasiast/TMLSA (or), MCM (cuivre, Akjoujt), BP Mauritania (Blocs C6, C8, C12 — projet gazier GTA), secteur orpaillage, hydrogène vert (nouveau depuis le rapport 2024).",
     "administrateur_independant_en_cours": "Cabinet CONSULTIS (Isselmou M. Taleb) pour les rapports ITIE 2024 et 2025 (provisoire).",
-    "source_des_faits_de_ce_set": "Site officiel cnitie.gov.mr (liste des rapports, page GMP/PV) et sommaire du rapport ITIE 2024 (Cabinet CONSULTIS), consultés le 15/08/2026, complétés par le contexte de travail d'Ahmedou sur l'analyse du rapport 2025 provisoire (CN-ITIE). Les intitulés d'exigences 1 à 7 et leurs libellés proviennent du dictionnaire ITIE_REQUIREMENT_HINTS déjà codé dans le workflow n8n fourni."
+    "source_des_faits_de_ce_set": "Site officiel cnitie.gov.mr (liste des rapports, page GMP/PV) et sommaire du rapport ITIE 2024 (Cabinet CONSULTIS), consultés le 15/08/2026, complétés par le contexte de travail d'Ahmedou sur l'analyse du rapport 2025 provisoire (CN-ITIE). Les intitulés d'exigences 1 à 7 et leurs libellés proviennent du dictionnaire ITIE_REQUIREMENT_HINTS déjà codé dans le workflow n8n fourni.",
+    "champ_expected_value": "expected_value (quand présent) contient une valeur numérique brute vérifiée manuellement contre Qdrant au moment de la rédaction — utilisée par tests/eval_gold_set.js pour une vraie comparaison numérique (avec tolérance d'échelle milliers/millions/milliards, voir numberIsVerified dans app/api/chat/route.ts), en plus de la comparaison retrieval_strategy déjà faite par analyze_gold_results.js. null = pas encore vérifié, ou question qui n'attend explicitement AUCUN chiffre (ex. id 6, garde-fou de clarification)."
   },
   "questions": [
     {
@@ -25,13 +26,21 @@
       "question": "Quel montant SNIM a-t-elle versé au Trésor public en 2022 ?",
       "content_intent_attendu": "figure",
       "query_type_attendu": "general",
-      "report_years_attendu": ["2022"],
-      "entities_attendu": ["SNIM"],
-      "exigence_itie": ["4.1"],
+      "report_years_attendu": [
+        "2022"
+      ],
+      "entities_attendu": [
+        "SNIM"
+      ],
+      "exigence_itie": [
+        "4.1"
+      ],
       "retrieval_strategy_attendu": "rapport_year_2022",
       "necessite_historique": false,
       "critere_validation": "Le chiffre cité doit provenir d'une ligne où « SNIM » apparaît explicitement (pas d'un total sectoriel agrégé) ; unité MRU précisée ; source (voir [n]).",
-      "piege_connu": "Risque de confusion entre le tableau par société et le tableau agrégé 'secteur extractif' ou 'Compte unique du Trésor'."
+      "piege_connu": "Risque de confusion entre le tableau par société et le tableau agrégé 'secteur extractif' ou 'Compte unique du Trésor'.",
+      "expected_value": "19 079 000 000",
+      "expected_value_source": "Vérifié manuellement contre Qdrant le 2026-08-18 (table_id doc_98549aff_table_6, Tableau 41 rapport 2022)."
     },
     {
       "id": 2,
@@ -40,13 +49,21 @@
       "question": "Quel a été le montant total des paiements de Kinross Tasiast en 2023 ?",
       "content_intent_attendu": "figure",
       "query_type_attendu": "general",
-      "report_years_attendu": ["2023"],
-      "entities_attendu": ["TASIAST/KINROSS"],
-      "exigence_itie": ["4.1"],
+      "report_years_attendu": [
+        "2023"
+      ],
+      "entities_attendu": [
+        "TASIAST/KINROSS"
+      ],
+      "exigence_itie": [
+        "4.1"
+      ],
       "retrieval_strategy_attendu": "rapport_year_2023",
       "necessite_historique": false,
       "critere_validation": "Chiffre exact avec unité, entité correctement identifiée (Tasiast peut apparaître sous 'Kinross' ou 'TMLSA').",
-      "piege_connu": "Kinross Tasiast peut être indexé sous plusieurs alias (Tasiast, TMLSA, Kinross) - vérifier que le retrieval couvre les variantes."
+      "piege_connu": "Kinross Tasiast peut être indexé sous plusieurs alias (Tasiast, TMLSA, Kinross) - vérifier que le retrieval couvre les variantes.",
+      "expected_value": "5 611 179 542",
+      "expected_value_source": "Tableau 47 rapport 2023, TMLSA (Tasiast) = 5 611 179 542,58 MRU (28,73%). Vérifié manuellement le 2026-08-18."
     },
     {
       "id": 3,
@@ -55,13 +72,21 @@
       "question": "Quel volume de minerai de fer la SNIM a-t-elle exporté en 2021 ?",
       "content_intent_attendu": "figure",
       "query_type_attendu": "general",
-      "report_years_attendu": ["2021"],
-      "entities_attendu": ["SNIM"],
-      "exigence_itie": ["3.2/3.3"],
+      "report_years_attendu": [
+        "2021"
+      ],
+      "entities_attendu": [
+        "SNIM"
+      ],
+      "exigence_itie": [
+        "3.2/3.3"
+      ],
       "retrieval_strategy_attendu": "rapport_year_2021 (alias 2020-2021)",
       "necessite_historique": false,
       "critere_validation": "Doit reconnaître que 2021 est couvert par le rapport combiné 2020-2021 (alias metadata.year) et donner le chiffre correspondant.",
-      "piege_connu": "Si l'alias 2020/2021 -> '2020-2021' ne fonctionne pas, le retrieval renverra 0 résultat pour 'metadata.year=2021'."
+      "piege_connu": "Si l'alias 2020/2021 -> '2020-2021' ne fonctionne pas, le retrieval renverra 0 résultat pour 'metadata.year=2021'.",
+      "expected_value": "12 695 981",
+      "expected_value_source": "AUCUN total explicite trouvé dans le corpus indexé pour ce tableau précis (Tableau 15 mentionné mais son contenu chiffré est absent des chunks — probablement perdu à l'extraction PDF). Valeur DÉRIVÉE par somme manuelle des tonnages SNIM/Fer du Tableau 17 (Exportations par pays destinataire 2021, table_id doc_56e22415_table_1) : 568838+265305+849246+8383245+192297+222421+1196331+898187+120111 = 12 695 981 tonnes. À vérifier si le bot répond avec un chiffre proche par un mécanisme équivalent, pas forcément identique au chiffre exact (dérivation manuelle, tolérance large recommandée)."
     },
     {
       "id": 4,
@@ -70,13 +95,19 @@
       "question": "Quel était le montant total des revenus extractifs déclarés dans le rapport ITIE 2015 ?",
       "content_intent_attendu": "figure",
       "query_type_attendu": "general",
-      "report_years_attendu": ["2015"],
+      "report_years_attendu": [
+        "2015"
+      ],
       "entities_attendu": [],
-      "exigence_itie": ["4.1"],
+      "exigence_itie": [
+        "4.1"
+      ],
       "retrieval_strategy_attendu": "rapport_year_2015",
       "necessite_historique": false,
       "critere_validation": "Chiffre exact tiré du rapport 2015 uniquement (borne basse du corpus utile) ; ne pas remonter par erreur un rapport antérieur (2011-2014) hors périmètre.",
-      "piege_connu": "Si le corpus contient encore les rapports 2011-2014, vérifier que le filtre metadata.year='2015' ne remonte pas un chunk d'une année antérieure mal taguée."
+      "piege_connu": "Si le corpus contient encore les rapports 2011-2014, vérifier que le filtre metadata.year='2015' ne remonte pas un chunk d'une année antérieure mal taguée.",
+      "expected_value": null,
+      "expected_value_source": "NON VÉRIFIABLE avec certitude : le rapport 2015 ne donne pas de total explicite unique \"revenus extractifs\" combinant mines+hydrocarbures dans les extraits indexés. Chiffres partiels trouvés : secteur minier au Trésor = 31,679 milliards MRO (chunk 21) ; chiffre isolé \"12,608 Milliards MRO\" en page de résumé exécutif sans périmètre explicite adjacent (chunk 20, probablement une infographie). Question à reformuler ou vérifier manuellement le PDF source directement avant de fixer une valeur attendue."
     },
     {
       "id": 5,
@@ -85,13 +116,20 @@
       "question": "Quel est le montant des paiements de la SNIM selon le rapport ITIE 2025 ?",
       "content_intent_attendu": "figure",
       "query_type_attendu": "general",
-      "report_years_attendu": ["2025"],
-      "entities_attendu": ["SNIM"],
-      "exigence_itie": ["4.1"],
+      "report_years_attendu": [
+        "2025"
+      ],
+      "entities_attendu": [
+        "SNIM"
+      ],
+      "exigence_itie": [
+        "4.1"
+      ],
       "retrieval_strategy_attendu": "rapport_year_2025",
       "necessite_historique": false,
       "critere_validation": "Chiffre issu du rapport 2025 ET mention explicite que ce rapport est en version PROVISOIRE (donc chiffres susceptibles d'évoluer avant adoption finale par le GMP).",
-      "piege_connu": "Risque que le bot présente un chiffre provisoire comme définitif sans réserve, ou au contraire refuse de répondre alors que le rapport provisoire est bien indexé."
+      "piege_connu": "Risque que le bot présente un chiffre provisoire comme définitif sans réserve, ou au contraire refuse de répondre alors que le rapport provisoire est bien indexé.",
+      "expected_value": null
     },
     {
       "id": 6,
@@ -101,12 +139,17 @@
       "content_intent_attendu": "figure (mais reportYears=[])",
       "query_type_attendu": "general",
       "report_years_attendu": [],
-      "entities_attendu": ["BP"],
-      "exigence_itie": ["4.1"],
+      "entities_attendu": [
+        "BP"
+      ],
+      "exigence_itie": [
+        "4.1"
+      ],
       "retrieval_strategy_attendu": "clarification demandée (hasNoYearForFinancialQuestion)",
       "necessite_historique": false,
       "critere_validation": "Le bot NE DOIT PAS inventer une année par défaut : il doit demander de préciser l'année ou la période, sans donner de chiffre d'exemple.",
-      "piege_connu": "Risque de halluciner un chiffre d'une année arbitraire si le garde-fou hasNoYearForFinancialQuestion ne se déclenche pas."
+      "piege_connu": "Risque de halluciner un chiffre d'une année arbitraire si le garde-fou hasNoYearForFinancialQuestion ne se déclenche pas.",
+      "expected_value": null
     },
     {
       "id": 7,
@@ -115,13 +158,25 @@
       "question": "Quels ont été les paiements de la SNIM entre 2019 et 2025 ?",
       "content_intent_attendu": "table_summary",
       "query_type_attendu": "general",
-      "report_years_attendu": ["2019", "2020-2021", "2022", "2023", "2024", "2025"],
-      "entities_attendu": ["SNIM"],
-      "exigence_itie": ["4.1"],
+      "report_years_attendu": [
+        "2019",
+        "2020-2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "entities_attendu": [
+        "SNIM"
+      ],
+      "exigence_itie": [
+        "4.1"
+      ],
       "retrieval_strategy_attendu": "rapport_year_multi (filterRapportByYears)",
       "necessite_historique": false,
       "critere_validation": "Réponse organisée par année (2019 : ... ; 2020-2021 : ... ; 2022 : ... ; 2025 provisoire : ... etc.), y compris si une année manque - le bot doit lister ce qui est disponible et signaler les années non couvertes ainsi que le statut provisoire de 2025, pas conclure à une absence totale de données.",
-      "piege_connu": "Le classificateur LLM doit correctement extraire la plage (filet regex 'entre X et Y' en secours) et couvrir jusqu'à 2025 ; risque de contentIntent mal classé en 'analysis' au lieu de 'table_summary', ou de plage tronquée avant 2025."
+      "piege_connu": "Le classificateur LLM doit correctement extraire la plage (filet regex 'entre X et Y' en secours) et couvrir jusqu'à 2025 ; risque de contentIntent mal classé en 'analysis' au lieu de 'table_summary', ou de plage tronquée avant 2025.",
+      "expected_value": null
     },
     {
       "id": 8,
@@ -130,13 +185,20 @@
       "question": "Comment ont évolué les revenus extractifs totaux entre 2020 et 2023 ?",
       "content_intent_attendu": "table_summary",
       "query_type_attendu": "general",
-      "report_years_attendu": ["2020-2021", "2022", "2023"],
+      "report_years_attendu": [
+        "2020-2021",
+        "2022",
+        "2023"
+      ],
       "entities_attendu": [],
-      "exigence_itie": ["4.1/5.1"],
+      "exigence_itie": [
+        "4.1/5.1"
+      ],
       "retrieval_strategy_attendu": "rapport_year_multi",
       "necessite_historique": false,
       "critere_validation": "Chiffres année par année avec brève tendance (hausse/baisse) uniquement si présente dans les extraits, sans extrapolation.",
-      "piege_connu": "Tentation d'interpoler ou d'estimer une tendance non explicitement énoncée dans les rapports."
+      "piege_connu": "Tentation d'interpoler ou d'estimer une tendance non explicitement énoncée dans les rapports.",
+      "expected_value": null
     },
     {
       "id": 9,
@@ -145,13 +207,18 @@
       "question": "Quelles sont les principales sociétés extractives et leurs paiements respectifs pour le rapport 2024 ?",
       "content_intent_attendu": "table_summary",
       "query_type_attendu": "liste",
-      "report_years_attendu": ["2024"],
+      "report_years_attendu": [
+        "2024"
+      ],
       "entities_attendu": [],
-      "exigence_itie": ["4.1"],
+      "exigence_itie": [
+        "4.1"
+      ],
       "retrieval_strategy_attendu": "rapport_year_2024",
       "necessite_historique": false,
       "critere_validation": "Doit s'appuyer sur le Tableau 40 (paiements par nomenclature comptable) ou équivalent par société ; lister chaque société avec son montant, pas un total unique.",
-      "piege_connu": "Risque de retomber sur un seul tableau agrégé plutôt que le détail par société."
+      "piege_connu": "Risque de retomber sur un seul tableau agrégé plutôt que le détail par société.",
+      "expected_value": null
     },
     {
       "id": 10,
@@ -160,13 +227,20 @@
       "question": "Et pour 2024 ?  [message précédent portait sur les paiements SNIM en 2022]",
       "content_intent_attendu": "figure (hérité)",
       "query_type_attendu": "general",
-      "report_years_attendu": ["2024"],
-      "entities_attendu": ["SNIM"],
-      "exigence_itie": ["4.1"],
+      "report_years_attendu": [
+        "2024"
+      ],
+      "entities_attendu": [
+        "SNIM"
+      ],
+      "exigence_itie": [
+        "4.1"
+      ],
       "retrieval_strategy_attendu": "rapport_year_2024",
       "necessite_historique": true,
       "critere_validation": "Le bot comprend que la question porte toujours sur SNIM, juste une autre année ; ne redemande pas 'de quelle société parlez-vous'.",
-      "piege_connu": "Cas typique où le classificateur doit correctement hériter contentIntent + entities du tour précédent malgré une question à 4 mots."
+      "piege_connu": "Cas typique où le classificateur doit correctement hériter contentIntent + entities du tour précédent malgré une question à 4 mots.",
+      "expected_value": null
     },
     {
       "id": 11,
@@ -175,9 +249,13 @@
       "question": "Quelles sont les recommandations formulées par l'Administrateur Indépendant dans le rapport ITIE 2023 ?",
       "content_intent_attendu": "analysis",
       "query_type_attendu": "general",
-      "report_years_attendu": ["2023"],
+      "report_years_attendu": [
+        "2023"
+      ],
       "entities_attendu": [],
-      "exigence_itie": ["7.3"],
+      "exigence_itie": [
+        "7.3"
+      ],
       "retrieval_strategy_attendu": "rapport_analytical",
       "necessite_historique": false,
       "critere_validation": "Liste numérotée fidèle aux recommandations du rapport 2023, avec le destinataire (CN-ITIE, MPEM, MF…) si mentionné ; pas réduites à un chiffre.",
@@ -190,9 +268,14 @@
       "question": "Quel est l'état de mise en œuvre des recommandations du rapport 2020-2021 selon le rapport 2024 ?",
       "content_intent_attendu": "analysis",
       "query_type_attendu": "general",
-      "report_years_attendu": ["2020-2021", "2024"],
+      "report_years_attendu": [
+        "2020-2021",
+        "2024"
+      ],
       "entities_attendu": [],
-      "exigence_itie": ["7.3"],
+      "exigence_itie": [
+        "7.3"
+      ],
       "retrieval_strategy_attendu": "rapport_analytical",
       "necessite_historique": true,
       "critere_validation": "Doit s'appuyer sur le Tableau 35 du rapport 2024 (suivi des recommandations du rapport 2020-2021) ; statut clair (mise en œuvre / partielle / non mise en œuvre) par recommandation si disponible.",
@@ -205,9 +288,13 @@
       "question": "Quels sont les principaux constats du rapport ITIE 2024 concernant le secteur de l'orpaillage ?",
       "content_intent_attendu": "analysis",
       "query_type_attendu": "general",
-      "report_years_attendu": ["2024"],
+      "report_years_attendu": [
+        "2024"
+      ],
       "entities_attendu": [],
-      "exigence_itie": ["3/6"],
+      "exigence_itie": [
+        "3/6"
+      ],
       "retrieval_strategy_attendu": "rapport_analytical",
       "necessite_historique": false,
       "critere_validation": "Réponse narrative fidèle au texte, sans transformation en liste de chiffres ; mentionne explicitement 'orpaillage' si le terme figure dans les extraits.",
@@ -220,9 +307,13 @@
       "question": "Et les recommandations concernant le cadre juridique, quelles étaient-elles ?  [suite d'une question sur le rapport 2023]",
       "content_intent_attendu": "analysis (hérité)",
       "query_type_attendu": "general",
-      "report_years_attendu": ["2023"],
+      "report_years_attendu": [
+        "2023"
+      ],
       "entities_attendu": [],
-      "exigence_itie": ["2/7.3"],
+      "exigence_itie": [
+        "2/7.3"
+      ],
       "retrieval_strategy_attendu": "rapport_analytical",
       "necessite_historique": true,
       "critere_validation": "Doit rester sur le rapport 2023 sans redemander l'année, et filtrer sur les recommandations liées au cadre juridique (exigence 2) plutôt que toutes les recommandations.",
@@ -237,7 +328,9 @@
       "query_type_attendu": "implementation",
       "report_years_attendu": [],
       "entities_attendu": [],
-      "exigence_itie": ["2.5"],
+      "exigence_itie": [
+        "2.5"
+      ],
       "retrieval_strategy_attendu": "smart exigence retrieval -> note_orientation (requirement_hint=2.5)",
       "necessite_historique": false,
       "critere_validation": "Structure en 4 blocs (Ce que demande la norme / Comment la mettre en œuvre - étapes numérotées continues / Points critiques / Ressources) ; toutes les étapes de la note d'orientation reproduites sans en omettre.",
@@ -252,7 +345,9 @@
       "query_type_attendu": "implementation",
       "report_years_attendu": [],
       "entities_attendu": [],
-      "exigence_itie": ["2.5"],
+      "exigence_itie": [
+        "2.5"
+      ],
       "retrieval_strategy_attendu": "smart exigence retrieval (détection contextuelle sans numéro explicite)",
       "necessite_historique": false,
       "critere_validation": "Doit identifier qu'il s'agit de l'exigence 2.5 même sans numéro cité, via le contexte thématique (registre, bénéficiaires effectifs).",
@@ -267,7 +362,9 @@
       "query_type_attendu": "implementation",
       "report_years_attendu": [],
       "entities_attendu": [],
-      "exigence_itie": ["2.2.a"],
+      "exigence_itie": [
+        "2.2.a"
+      ],
       "retrieval_strategy_attendu": "smart exigence retrieval (requirement_hint=2.2, sous-référence 2.2.a)",
       "necessite_historique": false,
       "critere_validation": "Réponse centrée sur la sous-exigence 2.2.a spécifiquement, pas sur l'ensemble de 2.2.",
@@ -282,7 +379,9 @@
       "query_type_attendu": "implementation",
       "report_years_attendu": [],
       "entities_attendu": [],
-      "exigence_itie": ["1.4"],
+      "exigence_itie": [
+        "1.4"
+      ],
       "retrieval_strategy_attendu": "smart exigence retrieval",
       "necessite_historique": false,
       "critere_validation": "Doit dire 'Groupe Multipartite' ou 'GMP'/'Comité National', jamais 'groupe de travail' seul (règle terminologique du prompt).",
@@ -297,7 +396,9 @@
       "query_type_attendu": "procedure",
       "report_years_attendu": [],
       "entities_attendu": [],
-      "exigence_itie": ["2.5"],
+      "exigence_itie": [
+        "2.5"
+      ],
       "retrieval_strategy_attendu": "smart exigence retrieval + mode problème",
       "necessite_historique": false,
       "critere_validation": "Structure Diagnostic / Solutions recommandées / Mesures préventives / Références ITIE, ancrée dans les extraits, pas une explication générale de l'exigence.",
@@ -312,7 +413,9 @@
       "query_type_attendu": "obligation",
       "report_years_attendu": [],
       "entities_attendu": [],
-      "exigence_itie": ["2.1"],
+      "exigence_itie": [
+        "2.1"
+      ],
       "retrieval_strategy_attendu": "reference (note_orientation/norme_itie/doc_validation)",
       "necessite_historique": false,
       "critere_validation": "Cite les textes légaux/réglementaires mentionnés dans les extraits avec leur portée exacte (taux, base) sans généraliser au-delà de ce qui est documenté.",
@@ -325,9 +428,13 @@
       "question": "Quelle est la procédure légale d'octroi et de renouvellement des titres miniers en Mauritanie ?",
       "content_intent_attendu": "howto/definition",
       "query_type_attendu": "procedure",
-      "report_years_attendu": ["2024"],
+      "report_years_attendu": [
+        "2024"
+      ],
       "entities_attendu": [],
-      "exigence_itie": ["2.2"],
+      "exigence_itie": [
+        "2.2"
+      ],
       "retrieval_strategy_attendu": "smart exigence retrieval / reference",
       "necessite_historique": false,
       "critere_validation": "Doit s'appuyer notamment sur le Tableau 39 du rapport 2024 (conditions d'octroi, de renouvellement et de mutation des titres miniers) si disponible dans le corpus.",
@@ -342,7 +449,9 @@
       "query_type_attendu": "obligation",
       "report_years_attendu": [],
       "entities_attendu": [],
-      "exigence_itie": ["2.1/4.1"],
+      "exigence_itie": [
+        "2.1/4.1"
+      ],
       "retrieval_strategy_attendu": "reference",
       "necessite_historique": false,
       "critere_validation": "Liste précise des institutions citées dans les extraits (ex. Direction Générale des Impôts, Douanes, Trésor) avec leur rôle respectif, sans en inventer.",
@@ -357,7 +466,9 @@
       "query_type_attendu": "obligation",
       "report_years_attendu": [],
       "entities_attendu": [],
-      "exigence_itie": ["2.4"],
+      "exigence_itie": [
+        "2.4"
+      ],
       "retrieval_strategy_attendu": "smart exigence retrieval",
       "necessite_historique": false,
       "critere_validation": "Citation fidèle de la disposition légale relative à la publication des contrats (exigence 2.4), avec référence au texte de loi si présent dans l'extrait.",
@@ -371,8 +482,12 @@
       "content_intent_attendu": "none",
       "query_type_attendu": "obligation",
       "report_years_attendu": [],
-      "entities_attendu": ["BP"],
-      "exigence_itie": ["2.4"],
+      "entities_attendu": [
+        "BP"
+      ],
+      "exigence_itie": [
+        "2.4"
+      ],
       "retrieval_strategy_attendu": "smart exigence retrieval / reference",
       "necessite_historique": false,
       "critere_validation": "Doit citer les clauses effectivement présentes dans les extraits contractuels (partage de production, durée, obligations environnementales…) sans compléter par des clauses génériques non vérifiées.",
@@ -385,9 +500,15 @@
       "question": "Qui détient actuellement les titres miniers dans la région de Zouerate ?",
       "content_intent_attendu": "none (factuel)",
       "query_type_attendu": "liste",
-      "report_years_attendu": ["2024"],
-      "entities_attendu": ["SNIM"],
-      "exigence_itie": ["2.3"],
+      "report_years_attendu": [
+        "2024"
+      ],
+      "entities_attendu": [
+        "SNIM"
+      ],
+      "exigence_itie": [
+        "2.3"
+      ],
       "retrieval_strategy_attendu": "reference",
       "necessite_historique": false,
       "critere_validation": "Doit s'appuyer sur le registre/périmètre minier (Tableau 38, périmètre minier 2024) avec noms de détenteurs et coordonnées si disponibles.",
@@ -402,7 +523,9 @@
       "query_type_attendu": "obligation",
       "report_years_attendu": [],
       "entities_attendu": [],
-      "exigence_itie": ["2.4"],
+      "exigence_itie": [
+        "2.4"
+      ],
       "retrieval_strategy_attendu": "smart exigence retrieval",
       "necessite_historique": false,
       "critere_validation": "Réponse factuelle sur le niveau de conformité effectif rapporté (pas une réponse générique sur ce que dit la norme, mais sur la pratique mauritanienne rapportée dans les extraits).",
@@ -432,7 +555,9 @@
       "query_type_attendu": "definition",
       "report_years_attendu": [],
       "entities_attendu": [],
-      "exigence_itie": ["5.1/5.3"],
+      "exigence_itie": [
+        "5.1/5.3"
+      ],
       "retrieval_strategy_attendu": "reference",
       "necessite_historique": false,
       "critere_validation": "Définition correcte du FNRH comme mécanisme de gestion des revenus pétroliers/gaziers mauritaniens, ancrée dans les extraits disponibles.",
@@ -447,7 +572,10 @@
       "query_type_attendu": "comparaison",
       "report_years_attendu": [],
       "entities_attendu": [],
-      "exigence_itie": ["4.1", "5.1"],
+      "exigence_itie": [
+        "4.1",
+        "5.1"
+      ],
       "retrieval_strategy_attendu": "reference (deux filtres requirement_hint)",
       "necessite_historique": false,
       "critere_validation": "Distingue clairement la collecte des revenus (4.1) de leur répartition/budgétisation (5.1), avec une phrase de synthèse finale.",
@@ -522,7 +650,9 @@
       "query_type_attendu": "obligation",
       "report_years_attendu": [],
       "entities_attendu": [],
-      "exigence_itie": ["1"],
+      "exigence_itie": [
+        "1"
+      ],
       "retrieval_strategy_attendu": "reference (doc_validation)",
       "necessite_historique": false,
       "critere_validation": "Le bot PEUT ici nommer explicitement 'validation', 'guide de validation', 'critères de validation' car l'utilisateur les a mentionnés en premier (règle VOIX VALIDATION).",
@@ -550,9 +680,16 @@
       "question": "Quelles recommandations ont motivé la hausse des paiements de la SNIM entre 2022 et 2023 ?",
       "content_intent_attendu": "table_summary OU analysis (ambigu, à trancher)",
       "query_type_attendu": "general",
-      "report_years_attendu": ["2022", "2023"],
-      "entities_attendu": ["SNIM"],
-      "exigence_itie": ["4.1/7.3"],
+      "report_years_attendu": [
+        "2022",
+        "2023"
+      ],
+      "entities_attendu": [
+        "SNIM"
+      ],
+      "exigence_itie": [
+        "4.1/7.3"
+      ],
       "retrieval_strategy_attendu": "rapport_year_multi ou rapport_analytical selon arbitrage",
       "necessite_historique": false,
       "critere_validation": "Idéalement la réponse combine : chiffres 2022 vs 2023 pour SNIM ET les recommandations éventuellement liées, sans se limiter à un seul des deux volets.",
